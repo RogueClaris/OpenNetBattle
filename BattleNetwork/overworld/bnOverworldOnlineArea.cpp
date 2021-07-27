@@ -18,10 +18,10 @@
 #include "bnOverworldObjectType.h"
 #include "../bnMath.h"
 #include "../bnNaviRegistration.h"
+#include "../bnMessageQuestion.h"
 #include "../netplay/bnBufferWriter.h"
 #include "../netplay/battlescene/bnNetworkBattleScene.h"
 #include "../netplay/bnNetPlayConfig.h"
-#include "../bnMessageQuestion.h"
 #include "../netplay/bnDownloadScene.h"
 
 using namespace swoosh::types;
@@ -60,6 +60,11 @@ Overworld::OnlineArea::OnlineArea(
     );
 
     Net().AddHandler(remoteAddress, packetProcessor);
+
+    sendLoginSignal();
+    sendAssetsFound();
+    sendAvatarChangeSignal();
+    sendRequestJoinSignal();
   }
   catch (...) {
     // invalid remote address
@@ -79,6 +84,33 @@ Overworld::OnlineArea::OnlineArea(
 
 Overworld::OnlineArea::~OnlineArea()
 {
+}
+
+std::optional<Overworld::OnlineArea::AbstractUser> Overworld::OnlineArea::GetAbstractUser(const std::string& id)
+{
+  if (id == ticket) {
+    return AbstractUser {
+      GetPlayer(),
+      GetEmoteNode(),
+      GetTeleportController(),
+      propertyAnimator
+    };
+  }
+
+  auto iter = onlinePlayers.find(id);
+
+  if (iter != onlinePlayers.end()) {
+    auto& onlinePlayer = iter->second;
+
+    return AbstractUser {
+      onlinePlayer.actor,
+      onlinePlayer.emoteNode,
+      onlinePlayer.teleportController,
+      onlinePlayer.propertyAnimator
+    };
+  }
+
+  return {};
 }
 
 void Overworld::OnlineArea::onUpdate(double elapsed)
@@ -107,8 +139,6 @@ void Overworld::OnlineArea::onUpdate(double elapsed)
     HandlePVPStep(pvpRemoteAddress);
     return;
   }
-
-  GetPersonalMenu().SetHealth(GetPlayerSession().health);
 
   // remove players before update, to prevent removed players from being added to sprite layers
   // players do not have a shared pointer to the emoteNode
@@ -228,6 +258,7 @@ void Overworld::OnlineArea::HandlePVPStep(const std::string& remoteAddress)
       screen
     };
 
+    returningFrom = ReturningScene::DownloadScene;
     using effect = swoosh::types::segue<BlendFadeIn>;
     getController().push<effect::to<DownloadScene>>(props);
     return;
@@ -256,8 +287,8 @@ void Overworld::OnlineArea::HandlePVPStep(const std::string& remoteAddress)
     Player* player = meta.GetNavi();
 
     int fullHealth = player->GetHealth();
-    player->SetHealth(GetPlayerSession().health);
-    player->SetEmotion(GetPlayerSession().emotion);
+    player->SetHealth(GetPlayerSession()->health);
+    player->SetEmotion(GetPlayerSession()->emotion);
 
     NetworkBattleSceneProps props = {
       { *player, GetProgramAdvance(), folder, new Field(6, 3), GetBackground() },
@@ -272,7 +303,7 @@ void Overworld::OnlineArea::HandlePVPStep(const std::string& remoteAddress)
       sendBattleResultsSignal(results);
     };
 
-    leftForBattle = true;
+    returningFrom = ReturningScene::BattleScene;
     getController().push<segue<WhiteWashFade>::to<NetworkBattleScene>>(props, callback);
   }
 }
@@ -284,7 +315,7 @@ void Overworld::OnlineArea::ResetPVPStep()
     netBattleProcessor = nullptr;
   }
 
-  canProceedToBattle = isPreparingForBattle = leftForBattle = false;
+  canProceedToBattle = isPreparingForBattle = false;
   pvpRemoteAddress.clear();
 }
 
@@ -696,6 +727,13 @@ void Overworld::OnlineArea::onDraw(sf::RenderTexture& surface)
   };
 
   for (auto& pair : onlinePlayers) {
+    auto id = pair.first;
+
+    if(excludedActors.find(id) != excludedActors.end()) {
+      // actor is excluded, do not display on hover
+      continue;
+    }
+
     auto& onlinePlayer = pair.second;
     auto& actor = *onlinePlayer.actor;
 
@@ -714,11 +752,6 @@ void Overworld::OnlineArea::onStart()
 {
   SceneBase::onStart();
   movementTimer.start();
-
-  sendLoginSignal();
-  sendAssetsFound();
-  sendAvatarChangeSignal();
-  sendRequestJoinSignal();
 }
 
 void Overworld::OnlineArea::onEnd()
@@ -746,14 +779,22 @@ void Overworld::OnlineArea::onResume()
     packetProcessor->SetForeground();
   }
 
-  /**
-    If we were preparing for battle but we cannot proceed to battle
-    when we return to this screen (due to the download scene ending)
-    then we know we cannot continue with PVP
-  */
-  if (isPreparingForBattle && !canProceedToBattle || leftForBattle) {
+  switch (returningFrom) {
+  case ReturningScene::DownloadScene:
+    if (!canProceedToBattle) {
+      // download scene failed, give up on pvp
+      ResetPVPStep();
+    }
+    break;
+  case ReturningScene::BattleScene:
     ResetPVPStep();
+    break;
+  case ReturningScene::VendorScene:
+    sendShopCloseSignal();
+    break;
   }
+
+  returningFrom = ReturningScene::Null;
 }
 
 void Overworld::OnlineArea::OnTileCollision() { }
@@ -923,6 +964,12 @@ void Overworld::OnlineArea::processPacketBody(const Poco::Buffer<char>& data)
     case ServerEvents::include_object:
       receiveIncludeObjectSignal(reader, data);
       break;
+    case ServerEvents::exclude_actor:
+      receiveExcludeActorSignal(reader, data);
+      break;
+    case ServerEvents::include_actor:
+      receiveIncludeActorSignal(reader, data);
+      break;
     case ServerEvents::move_camera:
       receiveMoveCameraSignal(reader, data);
       break;
@@ -979,6 +1026,12 @@ void Overworld::OnlineArea::processPacketBody(const Poco::Buffer<char>& data)
       break;
     case ServerEvents::close_bbs:
       receiveCloseBBSSignal(reader, data);
+      break;
+    case ServerEvents::shop_inventory:
+      receiveShopInventorySignal(reader, data);
+      break;
+    case ServerEvents::open_shop:
+      receiveOpenShopSignal(reader, data);
       break;
     case ServerEvents::initiate_pvp:
       receivePVPSignal(reader, data);
@@ -1147,12 +1200,14 @@ void Overworld::OnlineArea::sendAvatarChangeSignal()
   auto& naviMeta = NAVIS.At(GetCurrentNavi());
   auto naviName = naviMeta.GetName();
   auto maxHP = naviMeta.GetHP();
+  auto element = GetStrFromElement(naviMeta.GetElement());
 
   // mark completion
   BufferWriter writer;
   Poco::Buffer<char> buffer{ 0 };
   writer.Write(buffer, ClientEvents::avatar_change);
-  writer.WriteString<uint16_t>(buffer, naviName);
+  writer.WriteString<uint8_t>(buffer, naviName);
+  writer.WriteString<uint8_t>(buffer, element);
   writer.Write(buffer, maxHP);
   packetProcessor->SendPacket(Reliability::ReliableOrdered, buffer);
 }
@@ -1299,6 +1354,23 @@ void Overworld::OnlineArea::sendPostSelectSignal(const std::string& postId)
   Poco::Buffer<char> buffer{ 0 };
   writer.Write(buffer, ClientEvents::post_selection);
   writer.WriteString<uint16_t>(buffer, postId);
+  packetProcessor->SendPacket(Reliability::ReliableOrdered, buffer);
+}
+
+void Overworld::OnlineArea::sendShopCloseSignal()
+{
+  BufferWriter writer;
+  Poco::Buffer<char> buffer{ 0 };
+  writer.Write(buffer, ClientEvents::shop_close);
+  packetProcessor->SendPacket(Reliability::ReliableOrdered, buffer);
+}
+
+void Overworld::OnlineArea::sendShopPurchaseSignal(const std::string& itemName)
+{
+  BufferWriter writer;
+  Poco::Buffer<char> buffer{ 0 };
+  writer.Write(buffer, ClientEvents::shop_purchase);
+  writer.WriteString<uint8_t>(buffer, itemName);
   packetProcessor->SendPacket(Reliability::ReliableOrdered, buffer);
 }
 
@@ -1558,9 +1630,8 @@ void Overworld::OnlineArea::receiveHealthSignal(BufferReader& reader, const Poco
   auto health = reader.Read<int>(buffer);
   auto maxHealth = reader.Read<int>(buffer);
 
-  GetPlayerSession().health = health;
-  GetPersonalMenu().SetHealth(health);
-  GetPersonalMenu().SetMaxHealth(maxHealth);
+  GetPlayerSession()->health = health;
+  GetPlayerSession()->maxHealth = maxHealth;
 }
 
 void Overworld::OnlineArea::receiveEmotionSignal(BufferReader& reader, const Poco::Buffer<char>& buffer)
@@ -1571,28 +1642,29 @@ void Overworld::OnlineArea::receiveEmotionSignal(BufferReader& reader, const Poc
     emotion = Emotion::normal;
   }
 
-  GetPlayerSession().emotion = emotion;
+  GetPlayerSession()->emotion = emotion;
 }
 
 void Overworld::OnlineArea::receiveMoneySignal(BufferReader& reader, const Poco::Buffer<char>& buffer)
 {
   auto balance = reader.Read<int>(buffer);
-  GetPersonalMenu().SetMonies(balance);
+  GetPlayerSession()->money = balance;
 }
 
 void Overworld::OnlineArea::receiveItemSignal(BufferReader& reader, const Poco::Buffer<char>& buffer)
 {
+  auto id = reader.ReadString<uint8_t>(buffer);
   auto name = reader.ReadString<uint8_t>(buffer);
   auto description = reader.ReadString<uint16_t>(buffer);
 
-  AddItem(name, description);
+  AddItem(id, name, description);
 }
 
 void Overworld::OnlineArea::receiveRemoveItemSignal(BufferReader& reader, const Poco::Buffer<char>& buffer)
 {
-  auto name = reader.ReadString<uint8_t>(buffer);
+  auto id = reader.ReadString<uint8_t>(buffer);
 
-  RemoveItem(name);
+  RemoveItem(id);
 }
 
 void Overworld::OnlineArea::receivePlaySoundSignal(BufferReader& reader, const Poco::Buffer<char>& buffer) {
@@ -1656,6 +1728,50 @@ void Overworld::OnlineArea::receiveIncludeObjectSignal(BufferReader& reader, con
       break;
     }
   }
+}
+
+void Overworld::OnlineArea::receiveExcludeActorSignal(BufferReader& reader, const Poco::Buffer<char>& buffer)
+{
+  auto user = reader.ReadString<uint16_t>(buffer);
+
+  // store this user id in case their actor is added after this signal
+  // or the actor leaves the area and returns
+  excludedActors.emplace(user);
+
+  auto optionalAbstractUser = GetAbstractUser(user);
+
+  if (!optionalAbstractUser) {
+    return;
+  }
+
+  auto abstractUser = *optionalAbstractUser;
+
+  // removing the sprite instead of hiding it, to avoid teleport controller revealing the actor on us
+  this->RemoveSprite(abstractUser.actor);
+  this->RemoveSprite(abstractUser.teleportController.GetBeam());
+}
+
+void Overworld::OnlineArea::receiveIncludeActorSignal(BufferReader& reader, const Poco::Buffer<char>& buffer)
+{
+  auto user = reader.ReadString<uint16_t>(buffer);
+
+  excludedActors.erase(user);
+
+  auto optionalAbstractUser = GetAbstractUser(user);
+
+  if (!optionalAbstractUser) {
+    return;
+  }
+
+  auto abstractUser = *optionalAbstractUser;
+
+  // remove this actor to make sure they're not added more than once (server script issue)
+  this->RemoveSprite(abstractUser.actor);
+  this->RemoveSprite(abstractUser.teleportController.GetBeam());
+
+  // include the actor again
+  this->AddSprite(abstractUser.actor);
+  this->AddSprite(abstractUser.teleportController.GetBeam());
 }
 
 void Overworld::OnlineArea::receiveMoveCameraSignal(BufferReader& reader, const Poco::Buffer<char>& buffer)
@@ -1992,6 +2108,41 @@ void  Overworld::OnlineArea::receiveCloseBBSSignal(BufferReader& reader, const P
   GetMenuSystem().ClearBBS();
 }
 
+void Overworld::OnlineArea::receiveShopInventorySignal(BufferReader& reader, const Poco::Buffer<char>& buffer)
+{
+  auto itemCount = reader.Read<uint16_t>(buffer);
+
+  for (auto i = 0; i < itemCount; i++) {
+    VendorScene::Item item;
+    item.name = reader.ReadString<uint8_t>(buffer);
+    item.desc = reader.ReadString<uint8_t>(buffer);
+    item.cost = reader.Read<uint32_t>(buffer);
+
+    shopItems.push_back(item);
+  }
+}
+
+void Overworld::OnlineArea::receiveOpenShopSignal(BufferReader& reader, const Poco::Buffer<char>& buffer)
+{
+  uint32_t money = GetPlayerSession()->money;
+
+  auto mugTexturePath = reader.ReadString<uint16_t>(buffer);
+  auto mugAnimationPath = reader.ReadString<uint16_t>(buffer);
+
+  auto mugTexture = GetTexture(mugTexturePath);
+
+  Animation mugAnimation;
+  mugAnimation.LoadWithData(GetText(mugAnimationPath));
+
+  auto callback = [this](const std::string& itemName) {
+    sendShopPurchaseSignal(itemName);
+  };
+
+  returningFrom = ReturningScene::VendorScene;
+  getController().push<segue<BlackWashFade>::to<VendorScene>>(shopItems, money, mugTexture, mugAnimation, callback);
+  shopItems.clear();
+}
+
 void Overworld::OnlineArea::receivePVPSignal(BufferReader& reader, const Poco::Buffer<char>& buffer)
 {
   if (pvpRemoteAddress.empty()) {
@@ -2075,7 +2226,6 @@ void Overworld::OnlineArea::receiveActorConnectedSignal(BufferReader& reader, co
   if (isNew) {
     // add nodes to the scene base
     teleportController.EnableSound(false);
-    AddSprite(teleportController.GetBeam());
 
     actor->AddNode(&emoteNode);
     actor->SetSolid(solid);
@@ -2086,6 +2236,16 @@ void Overworld::OnlineArea::receiveActorConnectedSignal(BufferReader& reader, co
     });
 
     AddActor(actor);
+
+    auto isExcluded = excludedActors.find(user) != excludedActors.end();
+
+    if (isExcluded) {
+      // remove the actor if they are marked as hidden by the server
+      RemoveSprite(actor);
+    } else {
+      // add the teleport beam if the actor is not marked as hidden by the server
+      AddSprite(teleportController.GetBeam());
+    }
   }
 
   if (warpIn) {
@@ -2182,8 +2342,10 @@ void Overworld::OnlineArea::receiveActorMoveSignal(BufferReader& reader, const P
 
     // Do not attempt to animate the teleport over quick movements if already teleporting or animating position
     if (teleportController->IsComplete() && !animatingPos) {
+      auto expectedTime = onlinePlayer.lagWindow.GetEMA();
+
       // we can't possibly have moved this far away without teleporting
-      if (distance >= (onlinePlayer.actor->GetRunSpeed() * 2.f) * float(timeDifference)) {
+      if (distance >= (onlinePlayer.actor->GetRunSpeed() * 2.f) * expectedTime) {
         actor->Set3DPosition(endBroadcastPos);
         auto& action = teleportController->TeleportOut(actor);
         action.onFinish.Slot([=] {
@@ -2220,22 +2382,15 @@ void Overworld::OnlineArea::receiveActorSetAvatarSignal(BufferReader& reader, co
   std::string texturePath = reader.ReadString<uint16_t>(buffer);
   std::string animationPath = reader.ReadString<uint16_t>(buffer);
 
-  EmoteNode* emoteNode;
-  std::shared_ptr<Actor> actor;
+  auto optionalAbstractUser = GetAbstractUser(user);
 
-  if (user == ticket) {
-    actor = GetPlayer();
-    emoteNode = &GetEmoteNode();
+  if (!optionalAbstractUser) {
+    return;
   }
-  else {
-    auto userIter = onlinePlayers.find(user);
 
-    if (userIter == onlinePlayers.end()) return;
-
-    auto& onlinePlayer = userIter->second;
-    actor = onlinePlayer.actor;
-    emoteNode = &onlinePlayer.emoteNode;
-  }
+  auto abstractUser = *optionalAbstractUser;
+  auto& actor = abstractUser.actor;
+  auto& emoteNode = abstractUser.emoteNode;
 
   actor->setTexture(GetTexture(texturePath));
 
@@ -2243,8 +2398,8 @@ void Overworld::OnlineArea::receiveActorSetAvatarSignal(BufferReader& reader, co
   animation.LoadWithData(GetText(animationPath));
   actor->LoadAnimations(animation);
 
-  float emoteY = -actor->getSprite().getOrigin().y - emoteNode->getSprite().getLocalBounds().height / 2;
-  emoteNode->setPosition(0, emoteY);
+  float emoteY = -actor->getSprite().getOrigin().y - emoteNode.getSprite().getLocalBounds().height / 2;
+  emoteNode.setPosition(0, emoteY);
 }
 
 void Overworld::OnlineArea::receiveActorEmoteSignal(BufferReader& reader, const Poco::Buffer<char>& buffer)
@@ -2283,18 +2438,14 @@ void Overworld::OnlineArea::receiveActorAnimateSignal(BufferReader& reader, cons
   auto state = reader.ReadString<uint16_t>(buffer);
   auto loop = reader.Read<bool>(buffer);
 
-  if (user == ticket) {
-    GetPlayer()->PlayAnimation(state, loop);
+  auto optionalAbstractUser = GetAbstractUser(user);
+
+  if (!optionalAbstractUser) {
     return;
   }
 
-  auto userIter = onlinePlayers.find(user);
-
-  if (userIter == onlinePlayers.end()) return;
-
-  auto& onlinePlayer = userIter->second;
-
-  onlinePlayer.actor->PlayAnimation(state, loop);
+  auto abstractUser = *optionalAbstractUser;
+  abstractUser.actor->PlayAnimation(state, loop);
 }
 
 void Overworld::OnlineArea::receiveActorKeyFramesSignal(BufferReader& reader, const Poco::Buffer<char>& buffer)

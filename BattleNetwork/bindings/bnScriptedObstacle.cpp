@@ -10,6 +10,7 @@ ScriptedObstacle::ScriptedObstacle(Team _team) :
   shadow->setTexture(LOAD_TEXTURE(MISC_SHADOW));
   shadow->SetLayer(1);
   shadow->Hide(); // default: hidden
+  shadow->setOrigin(shadow->getSprite().getLocalBounds().width * 0.5, shadow->getSprite().getLocalBounds().height * 0.5);
   AddNode(shadow);
 
   animComponent = CreateComponent<AnimationComponent>(this);
@@ -28,11 +29,18 @@ bool ScriptedObstacle::CanMoveTo(Battle::Tile * next)
   return canMoveToCallback? canMoveToCallback(*next) : false;
 }
 
+void ScriptedObstacle::OnCollision(const Character* other)
+{
+  ScriptedObstacle& so = *this;
+  collisionCallback ? collisionCallback(so, const_cast<Character&>(*other)) : (void)0;
+}
+
 void ScriptedObstacle::OnUpdate(double _elapsed) {
   setPosition(tile->getPosition().x + Entity::tileOffset.x + ScriptedObstacle::scriptedOffset.x,
     tile->getPosition().y - this->height + Entity::tileOffset.y + ScriptedObstacle::scriptedOffset.y);
 
-  //shadow->setPosition(0, +GetHeight()); // counter offset the shadow node
+  // counter offset the shadow node
+  shadow->setPosition(0, Entity::GetCurrJumpHeight() / 2);
   ScriptedObstacle& so = *this;
   updateCallback ? updateCallback(so, _elapsed) : (void)0;
 

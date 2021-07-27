@@ -7,6 +7,7 @@
 #include <functional>
 
 #include "../bnBattleResults.h"
+#include "../bnVendorScene.h"
 #include "../netplay/bnRollingWindow.h"
 #include "../netplay/bnBufferReader.h"
 #include "../netplay/bnNetPlayPacketProcessor.h"
@@ -35,6 +36,20 @@ namespace Overworld {
 
   class OnlineArea final : public SceneBase {
   private:
+    struct AbstractUser {
+      std::shared_ptr<Overworld::Actor> actor;
+      Overworld::EmoteNode& emoteNode;
+      Overworld::TeleportController& teleportController;
+      ActorPropertyAnimator& propertyAnimator;
+    };
+
+    enum class ReturningScene {
+      DownloadScene,
+      BattleScene,
+      VendorScene,
+      Null
+    };
+
     struct ExcludedObjectData {
       bool visible;
       bool solid;
@@ -62,8 +77,8 @@ namespace Overworld {
     bool tryPopScene{ false };
     bool isPreparingForBattle{ false };
     bool canProceedToBattle{ false };
-    bool leftForBattle{ false };
     bool copyScreen{ false };
+    ReturningScene returningFrom{ ReturningScene::Null };
     ActorPropertyAnimator propertyAnimator;
     SelectedNavi lastFrameNavi{};
     ServerAssetManager serverAssetManager;
@@ -71,6 +86,7 @@ namespace Overworld {
     AssetMeta incomingAsset;
     std::map<std::string, OnlinePlayer> onlinePlayers;
     std::map<unsigned, ExcludedObjectData> excludedObjects;
+    std::unordered_set<std::string> excludedActors;
     std::vector<std::vector<TileObject*>> warps;
     std::list<std::string> removePlayers;
     sf::Vector3f lastPosition;
@@ -81,10 +97,12 @@ namespace Overworld {
     std::optional<std::string> trackedPlayer;
     CameraController serverCameraController;
     CameraController warpCameraController;
+    std::vector<VendorScene::Item> shopItems;
 
     void HandlePVPStep(const std::string& remoteAddress);
     void ResetPVPStep();
 
+    std::optional<AbstractUser> GetAbstractUser(const std::string& id);
     void onInteract(Interaction type);
     void updateOtherPlayers(double elapsed);
     void updatePlayer(double elapsed);
@@ -116,6 +134,8 @@ namespace Overworld {
     void sendBoardCloseSignal();
     void sendPostRequestSignal();
     void sendPostSelectSignal(const std::string& postId);
+    void sendShopCloseSignal();
+    void sendShopPurchaseSignal(const std::string& itemName);
     void sendBattleResultsSignal(const BattleResults& results);
 
     void receiveLoginSignal(BufferReader& reader, const Poco::Buffer<char>&);
@@ -138,6 +158,8 @@ namespace Overworld {
     void receivePlaySoundSignal(BufferReader& reader, const Poco::Buffer<char>&);
     void receiveExcludeObjectSignal(BufferReader& reader, const Poco::Buffer<char>&);
     void receiveIncludeObjectSignal(BufferReader& reader, const Poco::Buffer<char>&);
+    void receiveExcludeActorSignal(BufferReader& reader, const Poco::Buffer<char>&);
+    void receiveIncludeActorSignal(BufferReader& reader, const Poco::Buffer<char>&);
     void receiveMoveCameraSignal(BufferReader& reader, const Poco::Buffer<char>&);
     void receiveSlideCameraSignal(BufferReader& reader, const Poco::Buffer<char>&);
     void receiveShakeCameraSignal(BufferReader& reader, const Poco::Buffer<char>&);
@@ -153,6 +175,8 @@ namespace Overworld {
     void receiveAppendPostsSignal(BufferReader& reader, const Poco::Buffer<char>&);
     void receiveRemovePostSignal(BufferReader& reader, const Poco::Buffer<char>&);
     void receiveCloseBBSSignal(BufferReader& reader, const Poco::Buffer<char>&);
+    void receiveShopInventorySignal(BufferReader& reader, const Poco::Buffer<char>&);
+    void receiveOpenShopSignal(BufferReader& reader, const Poco::Buffer<char>&);
     void receivePVPSignal(BufferReader& reader, const Poco::Buffer<char>&);
     void receiveActorConnectedSignal(BufferReader& reader, const Poco::Buffer<char>&);
     void receiveActorDisconnectedSignal(BufferReader& reader, const Poco::Buffer<char>&);
