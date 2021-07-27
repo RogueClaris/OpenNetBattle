@@ -84,6 +84,36 @@ Overworld::TeleportController::Command& Overworld::TeleportController::TeleportI
   return this->sequence.back();
 }
 
+Overworld::TeleportController::Command& Overworld::TeleportController::WalkIn(Direction dir) {
+    auto onEnter = [=] {
+        this->animComplete = true;
+    };
+
+    auto onFinish = [=] {
+        this->animComplete = true;
+    };
+    this->walkFrames = frames(50);
+    this->startDir = dir;
+    this->sequence.push(Command{ Command::state::walk_in, actor->GetWalkSpeed() });
+    return this->sequence.back();
+}
+
+Overworld::TeleportController::Command& Overworld::TeleportController::WalkAway(Direction dir, sf::Vector3f exitPos) {
+    auto onEnter = [=] {
+        this->animComplete = true;
+    };
+
+    auto onFinish = [=] {
+        this->animComplete = true;
+    };
+
+    this->walkFrames = frames(50);
+    this->startDir = dir;
+    this->exitPos = exitPos;
+    this->sequence.push(Command{ Command::state::walk_out, actor->GetWalkSpeed() });
+    return this->sequence.back();
+}
+
 void Overworld::TeleportController::Update(double elapsed)
 {
   if (sequence.empty()) return;
@@ -100,12 +130,44 @@ void Overworld::TeleportController::Update(double elapsed)
         walkFrames -= from_seconds(elapsed);
       }
       else {
-          Logger::Log("finished!");
         this->walkoutComplete = true;
         actor->SetWalkSpeed(next.originalWalkSpeed);
         next.onFinish();
         sequence.pop();
       }
+    }
+    else if (next.state == Command::state::walk_in) {
+        if (walkFrames > frames(0) && this->startDir != Direction::none) {
+            // walk out for 50 frames
+            actor->Walk(this->startDir, true);
+            actor->SetWalkSpeed(20); // overwrite
+            walkFrames -= from_seconds(elapsed);
+        }
+        else {
+            this->walkoutComplete = true;
+            actor->SetWalkSpeed(next.originalWalkSpeed);
+            next.onFinish();
+            sequence.pop();
+        }
+    }
+    else if (next.state == Command::state::walk_out) {
+        if (walkFrames >= frames(50)) {
+            actor.get()->Set3DPosition(this->exitPos);
+            actor->Walk(this->startDir, true);
+            actor->SetWalkSpeed(20); // overwrite
+            walkFrames -= from_seconds(elapsed);
+        }
+        else if (walkFrames > frames(0)) {
+            actor->Walk(this->startDir, true);
+            actor->SetWalkSpeed(20); // overwrite
+            walkFrames -= from_seconds(elapsed);
+        }
+        else {
+            this->walkoutComplete = true;
+            actor->SetWalkSpeed(next.originalWalkSpeed);
+            next.onFinish;
+            sequence.pop();
+        }
     }
     else if (entered) {
       constexpr float _2pi = static_cast<float>(2.0f * M_PI);

@@ -5,7 +5,7 @@
  <tile id="0" type="Conveyor">
   <properties>
    <property name="Direction" value="Down Right"/>
-   <property name="speed" type="float" value="3"/>
+   <property name="speed" type="float" value="6"/>
   </properties>
   <animation>
    <frame tileid="0" duration="100"/>
@@ -16,7 +16,7 @@
  <tile id="3" type="Conveyor">
   <properties>
    <property name="Direction" value="Up Left"/>
-   <property name="speed" type="float" value="3"/>
+   <property name="speed" type="float" value="6"/>
   </properties>
   <animation>
    <frame tileid="3" duration="100"/>
@@ -27,7 +27,7 @@
  <tile id="6" type="Conveyor">
   <properties>
    <property name="Direction" value="Down Left"/>
-   <property name="speed" type="float" value="3"/>
+   <property name="speed" type="float" value="6"/>
   </properties>
   <animation>
    <frame tileid="6" duration="100"/>
@@ -48,7 +48,7 @@
  <tile id="9" type="Conveyor">
   <properties>
    <property name="Direction" value="Up Right"/>
-   <property name="speed" type="float" value="3"/>
+   <property name="speed" type="float" value="6"/>
   </properties>
   <animation>
    <frame tileid="9" duration="100"/>
@@ -69,7 +69,7 @@
  <tile id="12" type="Conveyor">
   <properties>
    <property name="Direction" value="Down Right"/>
-   <property name="speed" type="float" value="3"/>
+   <property name="speed" type="float" value="6"/>
   </properties>
   <animation>
    <frame tileid="12" duration="100"/>
@@ -80,7 +80,7 @@
  <tile id="15" type="Conveyor">
   <properties>
    <property name="Direction" value="Up Left"/>
-   <property name="speed" type="float" value="3"/>
+   <property name="speed" type="float" value="6"/>
   </properties>
   <animation>
    <frame tileid="15" duration="100"/>
@@ -91,7 +91,7 @@
  <tile id="18" type="Conveyor">
   <properties>
    <property name="Direction" value="Down Left"/>
-   <property name="speed" type="float" value="3"/>
+   <property name="speed" type="float" value="6"/>
   </properties>
   <animation>
    <frame tileid="18" duration="100"/>
@@ -102,7 +102,7 @@
  <tile id="21" type="Conveyor">
   <properties>
    <property name="Direction" value="Up Right"/>
-   <property name="speed" type="float" value="3"/>
+   <property name="speed" type="float" value="6"/>
   </properties>
   <animation>
    <frame tileid="21" duration="100"/>
@@ -113,7 +113,7 @@
  <tile id="24" type="Conveyor">
   <properties>
    <property name="Direction" value="Down Right"/>
-   <property name="speed" type="float" value="3"/>
+   <property name="speed" type="float" value="6"/>
   </properties>
   <animation>
    <frame tileid="24" duration="100"/>
@@ -124,7 +124,7 @@
  <tile id="27" type="Conveyor">
   <properties>
    <property name="Direction" value="Up Left"/>
-   <property name="speed" type="float" value="3"/>
+   <property name="speed" type="float" value="6"/>
   </properties>
   <animation>
    <frame tileid="27" duration="100"/>
@@ -135,7 +135,7 @@
  <tile id="30" type="Conveyor">
   <properties>
    <property name="Direction" value="Down Left"/>
-   <property name="speed" type="float" value="3"/>
+   <property name="speed" type="float" value="6"/>
   </properties>
   <animation>
    <frame tileid="30" duration="100"/>
@@ -146,7 +146,7 @@
  <tile id="33" type="Conveyor">
   <properties>
    <property name="Direction" value="Up Right"/>
-   <property name="speed" type="float" value="3"/>
+   <property name="speed" type="float" value="6"/>
   </properties>
   <animation>
    <frame tileid="33" duration="100"/>

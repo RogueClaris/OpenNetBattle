@@ -17,7 +17,9 @@ namespace Overworld {
     struct Command {
       enum class state {
         teleport_in = 0,
-        teleport_out
+        teleport_out,
+        walk_in,
+        walk_out
       } const state{};
       const float originalWalkSpeed{};
       Callback<void()> onFinish;
@@ -28,6 +30,8 @@ namespace Overworld {
 
     Command& TeleportOut(std::shared_ptr<Actor> actor);
     Command& TeleportIn(std::shared_ptr<Actor> actor, const sf::Vector3f& start, Direction dir, bool doSpin = false);
+    Command& WalkIn(Direction dir);
+    Command& WalkAway(Direction dir, sf::Vector3f exitPos);
     void Update(double elapsed);
     bool TeleportedOut() const;
     const bool IsComplete() const;
@@ -43,6 +47,7 @@ namespace Overworld {
     frame_time_t walkFrames{};
     std::shared_ptr<Overworld::Actor> actor;
     std::shared_ptr<WorldSprite> beam;
+    sf::Vector3f exitPos;
     Animation beamAnim;
     Direction startDir;
   };
