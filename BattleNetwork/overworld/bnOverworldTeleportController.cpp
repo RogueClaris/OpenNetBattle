@@ -90,7 +90,6 @@ void Overworld::TeleportController::Update(double elapsed)
 
   this->beamAnim.Update(static_cast<float>(elapsed), beam->getSprite());
   this->beam->SetLayer(this->actor->GetLayer());
-
   auto& next = sequence.front();
   if (next.state == Command::state::teleport_in) {
     if (animComplete) {
@@ -101,6 +100,7 @@ void Overworld::TeleportController::Update(double elapsed)
         walkFrames -= from_seconds(elapsed);
       }
       else {
+          Logger::Log("finished!");
         this->walkoutComplete = true;
         actor->SetWalkSpeed(next.originalWalkSpeed);
         next.onFinish();

@@ -376,7 +376,6 @@ void Overworld::OnlineArea::updatePlayer(double elapsed) {
       detectWarp(player);
     }
   }
-
   detectConveyor(player);
 
   lastPosition = playerPos;
@@ -456,7 +455,7 @@ void Overworld::OnlineArea::detectWarp(std::shared_ptr<Overworld::Actor>& player
       }
 
       command.onFinish.Slot([=] {
-        teleportIn(targetPosition, Orthographic(direction));
+        //teleportIn(targetPosition, Orthographic(direction));
         warpCameraController.QueueUnlockCamera();
       });
       break;
@@ -830,18 +829,6 @@ bool Overworld::OnlineArea::positionIsInWarp(sf::Vector3f position) {
   }
 
   return false;
-}
-
-Overworld::TeleportController::Command& Overworld::OnlineArea::teleportIn(sf::Vector3f position, Direction direction)
-{
-  auto actor = GetPlayer();
-
-  if (!positionIsInWarp(position)) {
-    actor->Face(direction);
-    direction = Direction::none;
-  }
-
-  return GetTeleportController().TeleportIn(actor, position, direction);
 }
 
 void Overworld::OnlineArea::transferServer(const std::string& address, uint16_t port, const std::string& data, bool warpOut) {
@@ -1346,10 +1333,10 @@ void Overworld::OnlineArea::receiveLoginSignal(BufferReader& reader, const Poco:
   auto player = GetPlayer();
 
   if (warpIn) {
-    auto& command = teleportIn(spawnPos, Orthographic(direction));
-    command.onFinish.Slot([=] {
-      GetPlayerController().ControlActor(player);
-    });
+    //auto& command = teleportIn(spawnPos, Orthographic(direction));
+    //command.onFinish.Slot([=] {
+     // GetPlayerController().ControlActor(player);
+   // });
   }
   else {
     player->Set3DPosition(spawnPos);
@@ -1391,7 +1378,7 @@ void Overworld::OnlineArea::receiveTransferCompleteSignal(BufferReader& reader, 
   warpCameraController.UnlockCamera();
 
   if (warpIn) {
-    teleportIn(player->Get3DPosition(), worldDirection);
+    //teleportIn(player->Get3DPosition(), worldDirection);
   }
 
   isConnected = true;
@@ -1778,7 +1765,7 @@ void Overworld::OnlineArea::receiveTeleportSignal(BufferReader& reader, const Po
   if (warp) {
     auto& action = GetTeleportController().TeleportOut(player);
     action.onFinish.Slot([this, player, position, direction] {
-      teleportIn(position, Orthographic(direction));
+      //teleportIn(position, Orthographic(direction));
     });
   }
   else {

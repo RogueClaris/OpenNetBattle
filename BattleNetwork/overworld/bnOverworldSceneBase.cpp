@@ -51,12 +51,12 @@ namespace {
   auto MakeOptions = [](Overworld::SceneBase* scene) -> Overworld::PersonalMenu::OptionsList {
     return {
       { "chip_folder", std::bind(&Overworld::SceneBase::GotoChipFolder, scene) },
-      { "navi",        std::bind(&Overworld::SceneBase::GotoNaviSelect, scene) },
+      //{ "navi",        std::bind(&Overworld::SceneBase::GotoNaviSelect, scene) },
       { "mail",        std::bind(&Overworld::SceneBase::GotoMail, scene) },
       { "key_items",   std::bind(&Overworld::SceneBase::GotoKeyItems, scene) },
-      { "mob_select",  std::bind(&Overworld::SceneBase::GotoMobSelect, scene) },
-      { "config",      std::bind(&Overworld::SceneBase::GotoConfig, scene) },
-      { "sync",        std::bind(&Overworld::SceneBase::GotoPVP, scene) }
+      //{ "mob_select",  std::bind(&Overworld::SceneBase::GotoMobSelect, scene) },
+      { "config",      std::bind(&Overworld::SceneBase::GotoConfig, scene) }
+      //{ "sync",        std::bind(&Overworld::SceneBase::GotoPVP, scene) }
     };
   };
 }
@@ -68,17 +68,9 @@ Overworld::SceneBase::SceneBase(swoosh::ActivityController& controller) :
   Scene(controller),
   map(0, 0, 0, 0),
   time(Font::Style::thick),
-  playerActor(std::make_shared<Overworld::Actor>("You"))
+  playerActor(std::make_shared<Overworld::Actor>(""))
 {
-  // When we reach the menu scene we need to load the player information
-  // before proceeding to next sub menus
-  webAccountIcon.setTexture(LOAD_TEXTURE(WEBACCOUNT_STATUS));
-  webAccountIcon.setScale(2.f, 2.f);
-  webAccountIcon.setPosition(4, getController().getVirtualWindowSize().y - 44.0f);
-  webAccountAnimator = Animation("resources/ui/webaccount_icon.animation");
-  webAccountAnimator.Load();
-  webAccountAnimator.SetAnimation("NO_CONNECTION");
-
+  
   // Draws the scrolling background
   SetBackground(std::make_shared<LanBackground>());
 
@@ -317,7 +309,7 @@ void Overworld::SceneBase::onUpdate(double elapsed) {
       accountCommandResponse = WEBCLIENT.SendFetchAccountCommand();
   }*/
 
-  webAccountAnimator.Update((float)elapsed, webAccountIcon.getSprite());
+  
 }
 
 void Overworld::SceneBase::HandleCamera(float elapsed) {
@@ -495,7 +487,7 @@ void Overworld::SceneBase::onDraw(sf::RenderTexture& surface) {
   surface.draw(personalMenu);
 
   // Add the web account connection symbol
-  surface.draw(webAccountIcon);
+  
 
   PrintTime(surface);
 
