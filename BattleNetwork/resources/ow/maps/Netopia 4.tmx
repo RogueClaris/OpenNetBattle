@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.1" orientation="isometric" renderorder="right-down" width="38" height="39" tilewidth="64" tileheight="32" infinite="0" nextlayerid="21" nextobjectid="51">
+<map version="1.5" tiledversion="1.7.1" orientation="isometric" renderorder="right-down" width="38" height="39" tilewidth="64" tileheight="32" infinite="0" nextlayerid="21" nextobjectid="59">
  <properties>
   <property name="Background" value="ameroppa"/>
   <property name="Name" value="Netopia 4"/>
@@ -15,7 +15,7 @@
  <tileset firstgid="230" source="../tiles/Exits Redux.tsx"/>
  <layer id="1" name="Tile Layer 1" width="38" height="39">
   <data encoding="csv">
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,97,97,97,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,233,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,97,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,97,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,97,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -59,7 +59,7 @@
  <objectgroup id="2" name="Object Layer 1">
   <object id="8" type="Home Warp" gid="185" x="672" y="1184" width="60" height="32">
    <properties>
-    <property name="Direction" value="Up Left"/>
+    <property name="Direction" value="Down Left"/>
    </properties>
   </object>
   <object id="9" type="Position Warp" gid="180" x="448" y="1184" width="61" height="32">
@@ -86,6 +86,7 @@
    </properties>
   </object>
   <object id="21" gid="175" x="431.583" y="751.083" width="44" height="61"/>
+  <object id="54" gid="233" x="608" y="32" width="64" height="40"/>
  </objectgroup>
  <layer id="3" name="Tile Layer 2" width="38" height="39" offsetx="0" offsety="-16">
   <data encoding="csv">
@@ -154,8 +155,8 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,115,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,115,117,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,125,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -264,6 +265,48 @@
  </layer>
  <objectgroup id="20" name="Object Layer 5" offsetx="0" offsety="-64">
   <object id="48" gid="175" x="976.333" y="431" width="44" height="61"/>
+  <object id="53" name="Net Warp" gid="2147483887" x="128" y="960" width="64" height="40" visible="0">
+   <properties>
+    <property name="Destination" value="resources/ow/maps/Netopia 2.tmx"/>
+    <property name="Direction" value="Up Left"/>
+    <property name="Enter Direction" value="Up Left"/>
+    <property name="X" type="float" value="29.5"/>
+    <property name="Y" type="float" value="19.5"/>
+    <property name="Z" type="float" value="0"/>
+   </properties>
+  </object>
+  <object id="55" gid="180" x="800" y="992" width="61" height="32">
+   <properties>
+    <property name="Direction" value="Up Left"/>
+    <property name="X" type="float" value="16.5"/>
+    <property name="Y" type="float" value="7.5"/>
+    <property name="Z" type="float" value="4"/>
+   </properties>
+  </object>
+  <object id="56" type="Position Warp" gid="180" x="800" y="800" width="61" height="32">
+   <properties>
+    <property name="Direction" value="Up Left"/>
+    <property name="X" type="float" value="36.5"/>
+    <property name="Y" type="float" value="28.5"/>
+    <property name="Z" type="float" value="4"/>
+   </properties>
+  </object>
+  <object id="57" gid="180" x="1152" y="896" width="61" height="32">
+   <properties>
+    <property name="Direction" value="Up Right"/>
+    <property name="X" type="float" value="25.5"/>
+    <property name="Y" type="float" value="25.5"/>
+    <property name="Z" type="float" value="4"/>
+   </properties>
+  </object>
+  <object id="58" gid="180" x="512" y="224" width="61" height="32">
+   <properties>
+    <property name="Direction" value="Down Left"/>
+    <property name="X" type="float" value="25.5"/>
+    <property name="Y" type="float" value="31.5"/>
+    <property name="Z" type="float" value="4"/>
+   </properties>
+  </object>
  </objectgroup>
  <layer id="11" name="Tile Layer 6" width="38" height="39" offsetx="0" offsety="-80">
   <data encoding="csv">
@@ -421,7 +464,7 @@
 0,0,0,0,0,0,148,0,0,145,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,148,0,0,145,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,148,0,14,11,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,58,59,15,18,7,116,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,58,59,15,18,7,118,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,2,3,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -441,10 +484,11 @@
 </data>
  </layer>
  <objectgroup id="18" name="Object Layer 9" offsetx="0" offsety="-128">
-  <object id="11" type="Position Warp" gid="180" x="288" y="384" width="61" height="32">
+  <object id="11" type="Position Warp" gid="1073742004" x="320" y="416" width="61" height="32" rotation="180">
    <properties>
-    <property name="X" type="float" value="25"/>
-    <property name="Y" type="float" value="11"/>
+    <property name="Direction" value="Up Right"/>
+    <property name="X" type="float" value="22.5"/>
+    <property name="Y" type="float" value="7.5"/>
     <property name="Z" type="float" value="0"/>
    </properties>
   </object>

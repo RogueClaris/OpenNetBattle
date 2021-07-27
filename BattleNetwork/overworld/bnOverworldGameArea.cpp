@@ -51,7 +51,6 @@ void Overworld::GameArea::onUpdate(double elapsed)
     auto& menuSystem = GetMenuSystem();
     menuSystem.SetNextSpeaker(sf::Sprite(*mugshot), anim);
     menuSystem.EnqueueMessage("This is the internet.");
-
     GetPlayer()->Face(Direction::down_right);
   }
   detectConveyor();
@@ -110,15 +109,20 @@ void Overworld::GameArea::OnTileCollision()
     );
     for (auto i = 0; i < map.GetLayerCount(); i++) {
         auto& layer = map.GetLayer(i);
-
         for (auto j = 0; j < layer.GetTileObjects().size(); j++) {
             TileObject theWarp = layer.GetTileObjects()[j];
+            float xWarp = theWarp.position.x;
+            float yWarp = theWarp.position.y;
             auto warpPos2 = sf::Vector3f(
-                std::floor(theWarp.position.x / (tileSize.x / 2)),
-                std::floor(theWarp.position.y / tileSize.y),
+                std::floor(xWarp / (tileSize.x / 2)),
+                std::floor(yWarp / tileSize.y),
                 std::floor(z)
             );
-            if (ObjectType::position_warp == theWarp.type && playerPos2 == warpPos2) {
+            if (theWarp.tile.flippedHorizontal) {warpPos2.x -= 1, warpPos2.y -= 1;}
+            if (playerPos2 != warpPos2) {
+                continue;
+            }
+            if (ObjectType::position_warp == theWarp.type) {
                 playerController.ReleaseActor();
                 auto& command = teleportController.TeleportOut(player);
                 auto targetTilePos = sf::Vector2f(
@@ -144,6 +148,27 @@ void Overworld::GameArea::OnTileCollision()
                     warpCameraController.QueueUnlockCamera();
                     GetPlayerController().ControlActor(player);
                     });
+                break;
+            }
+            if (theWarp.name == "Net Warp") {
+                playerController.ReleaseActor();
+                if (theWarp.customProperties.GetPropertyInt("teleport")) {
+                    auto& command = teleportController.TeleportOut(player);
+                }
+                auto targetTilePos = sf::Vector2f(
+                    theWarp.customProperties.GetPropertyFloat("x"),
+                    theWarp.customProperties.GetPropertyFloat("y")
+                );
+                auto mapPath = theWarp.customProperties.GetProperty("destination");
+                auto enterDir = FromString(theWarp.customProperties.GetProperty("enter direction"));
+                auto targetWorldPos = map.TileToWorld(targetTilePos);
+                auto targetPosition = sf::Vector3f(targetWorldPos.x, targetWorldPos.y, theWarp.customProperties.GetPropertyFloat("z"));
+                auto forcePosition = sf::Vector2f(targetWorldPos.x, targetWorldPos.y);
+                auto direction = FromString(theWarp.customProperties.GetProperty("direction"));
+                LoadMap(FileUtil::Read(mapPath));
+                player->SetElevation(theWarp.customProperties.GetPropertyFloat("z"));
+                player->setPosition(forcePosition);
+                GetPlayerController().ControlActor(player);
                 break;
             }
         }

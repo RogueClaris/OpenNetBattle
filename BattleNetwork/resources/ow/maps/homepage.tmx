@@ -29,8 +29,8 @@
    <properties>
     <property name="Destination" value="resources/ow/maps/Netopia 4.tmx"/>
     <property name="Direction" value="Left"/>
-    <property name="X" type="float" value="21"/>
-    <property name="Y" type="float" value="37"/>
+    <property name="X" type="float" value="21.5"/>
+    <property name="Y" type="float" value="37.5"/>
     <property name="Z" type="float" value="0"/>
    </properties>
   </object>
