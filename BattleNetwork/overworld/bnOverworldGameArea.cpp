@@ -118,7 +118,7 @@ void Overworld::GameArea::OnTileCollision()
                 std::floor(yWarp / tileSize.y),
                 std::floor(z)
             );
-            if (theWarp.tile.flippedHorizontal) {warpPos2.x -= 1, warpPos2.y -= 1;}
+            if (theWarp.tile.flippedHorizontal) { warpPos2.x -= 1, warpPos2.y -= 1; }
             if (playerPos2 != warpPos2) {
                 continue;
             }
