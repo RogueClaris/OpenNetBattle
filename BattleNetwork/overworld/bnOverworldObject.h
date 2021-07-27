@@ -65,7 +65,6 @@ namespace Overworld {
     static TileObject From(const XMLElement& element);
 
     bool Intersects(Map& map, float x, float y) const override;
-
     void Update(Map& map);
   };
 }

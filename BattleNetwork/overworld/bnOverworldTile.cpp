@@ -4,31 +4,31 @@
 #include <SFML/Graphics.hpp>
 
 namespace Overworld {
-  TileMeta::TileMeta(
-    const Tileset& tileset,
-    unsigned int id,
-    unsigned int gid,
-    sf::Vector2f drawingOffset,
-    sf::Vector2f alignmentOffset,
-    const std::string& typeString,
-    const CustomProperties& customProperties,
-    std::vector<std::unique_ptr<Shape>> collisionShapes
-  ) :
-    id(id),
-    gid(gid),
-    drawingOffset(drawingOffset),
-    alignmentOffset(alignmentOffset),
-    typeString(typeString),
-    type(TileType::FromString(typeString)),
-    direction(FromString(customProperties.GetProperty("direction"))),
-    customProperties(customProperties),
-    collisionShapes(std::move(collisionShapes))
-  {
-    sprite.setTexture(*tileset.texture);
-    animation = tileset.animation;
-    animation << to_string(id) << Animator::Mode::Loop;
-    animation.Refresh(sprite);
-  }
+    TileMeta::TileMeta(
+        const Tileset& tileset,
+        unsigned int id,
+        unsigned int gid,
+        sf::Vector2f drawingOffset,
+        sf::Vector2f alignmentOffset,
+        const std::string& typeString,
+        const CustomProperties& customProperties,
+        std::vector<std::unique_ptr<Shape>> collisionShapes
+    ) :
+        id(id),
+        gid(gid),
+        drawingOffset(drawingOffset),
+        alignmentOffset(alignmentOffset),
+        typeString(typeString),
+        type(TileType::FromString(typeString)),
+        direction(FromString(customProperties.GetProperty("direction"))),
+        customProperties(customProperties),
+        collisionShapes(std::move(collisionShapes))
+    {
+        sprite.setTexture(*tileset.texture);
+        animation = tileset.animation;
+        animation << to_string(id) << Animator::Mode::Loop;
+        animation.Refresh(sprite);
+    }
 
   bool Tile::Intersects(Map& map, float x, float y) const {
     auto tileset = map.GetTileset(gid);
@@ -83,5 +83,19 @@ namespace Overworld {
     }
 
     return false;
+  }
+
+  bool Tile::isConveyor(Map& map) {
+      auto tileset = map.GetTileset(gid);
+
+      if (!tileset) {
+          return true;
+      }
+
+      auto tileMeta = map.GetTileMeta(gid);
+      if (tileMeta->type == TileType::conveyor) {
+          return true;
+      }
+      return false;
   }
 }

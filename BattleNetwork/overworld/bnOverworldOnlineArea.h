@@ -112,7 +112,6 @@ namespace Overworld {
     void detectWarp(std::shared_ptr<Actor>& player);
     void detectConveyor(std::shared_ptr<Actor>& player);
     bool positionIsInWarp(sf::Vector3f position);
-    Overworld::TeleportController::Command& teleportIn(sf::Vector3f position, Direction direction);
     void transferServer(const std::string& address, uint16_t port, const std::string& data, bool warpOut);
     void processPacketBody(const Poco::Buffer<char>& data);
 

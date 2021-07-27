@@ -3,7 +3,10 @@
 #include <Poco/Net/HostEntry.h>
 #include <Segues/BlackWashFade.h>
 #include "bnOverworldHomepage.h"
-#include "bnOverworldOnlineArea.h"
+#include "bnOverworldGameArea.h"
+#include "bnOverworldMap.h"
+#include "bnOverworldTileType.h"
+#include "bnOverworldObjectType.h"
 #include "../netplay/bnNetPlayConfig.h"
 #include "../bnMessage.h"
 
@@ -387,7 +390,7 @@ void Overworld::Homepage::OnTileCollision()
 
   auto& teleportController = GetTeleportController();
 
-  if (netWarpTilePos == tilePos && teleportController.IsComplete() && serverStatus == ServerStatus::online) {
+  if (netWarpTilePos == tilePos && teleportController.IsComplete()) {
     auto& playerController = GetPlayerController();
 
     // Calculate the origin by grabbing this tile's grid Y/X values
@@ -397,12 +400,14 @@ void Overworld::Homepage::OnTileCollision()
       tilePos.y * tileSize.y + tileSize.y / 2.0f,
       netWarpTilePos.z
     );
-
-    auto address = remoteAddress.host().toString();
-    auto port = remoteAddress.port();
-
+    auto warpTile = map.GetLayer(0).GetTileObject("Net Warp");
+    auto warpMap = warpTile->get().customProperties.GetProperty("destination");
+    sf::Vector2f warpBasicXY = { warpTile->get().customProperties.GetPropertyFloat("x"), warpTile->get().customProperties.GetPropertyFloat("y")};
+    auto warpBasic = map.TileToWorld(warpBasicXY);
+    auto warpPos = sf::Vector3f(warpBasic.x, warpBasic.y, warpTile->get().customProperties.GetPropertyFloat("z"));
+    Direction warpDirection = FromString(warpTile->get().customProperties.GetProperty("direction"));
     auto teleportToCyberworld = [=] {
-      getController().push<segue<BlackWashFade>::to<Overworld::OnlineArea>>(address, port, "", maxPayloadSize);
+      getController().push<segue<BlackWashFade>::to<Overworld::GameArea>>(warpMap, warpPos, warpDirection);
     };
 
     this->TeleportUponReturn(returnPoint);
