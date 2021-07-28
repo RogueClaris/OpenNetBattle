@@ -3,7 +3,7 @@
 #include "bnOverworldOnlineArea.h"
 #include "../netplay/bnNetPlayConfig.h"
 #include "../bnMessage.h"
-#include "bnConveyors.h"
+#include "../battlescene/bnMobBattleScene.h"
 #include "bnOverworldMap.h"
 
 using namespace swoosh::types;
@@ -29,6 +29,18 @@ Overworld::GameArea::GameArea(
       command.onFinish.Slot([=] {
         GetPlayerController().ControlActor(player);
       });
+      XMLElement mapXML = parseXML(FileUtil::Read(mapPath));
+      XMLElement childXML;
+      for (auto& child : mapXML.children) {
+          if (child.name == "properties") {
+              childXML = child;
+              break;
+          }
+      }
+      for (const auto& propertyElement : childXML.children) {
+
+      }
+      this->steps = 0;
     }
 
 Overworld::GameArea::~GameArea() {
@@ -60,6 +72,12 @@ void Overworld::GameArea::onUpdate(double elapsed)
       propertyAnimator.OnComplete([this] {
           GetPlayerController().ControlActor(GetPlayer());
           });
+  }
+  else {
+      auto previousPos = player->getPosition();
+      if (player->getPosition() != previousPos) {
+          this->steps++
+      }
   }
 }
 

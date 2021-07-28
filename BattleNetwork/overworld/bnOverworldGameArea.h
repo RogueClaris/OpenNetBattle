@@ -10,10 +10,10 @@ namespace Overworld {
     std::string mapPath;
     sf::Vector3f entryPos{};
     Direction mapDirection;
+    int steps = 0;
     CameraController warpCameraController;
     Overworld::TeleportController::Command& teleportIn(sf::Vector3f position, Direction direction);
     bool positionIsInWarp(sf::Vector3f position);
-    bool isPosMatch(float x1, float y1, float x2, float y2);
     ActorPropertyAnimator propertyAnimator;
   public:
     /**
