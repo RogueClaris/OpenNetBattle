@@ -55,10 +55,12 @@ void Overworld::GameArea::onUpdate(double elapsed)
   }
   detectConveyor();
   auto player = GetPlayer();
-  propertyAnimator.Update(*player, elapsed);
-  propertyAnimator.OnComplete([this] {
-      GetPlayerController().ControlActor(GetPlayer());
-      });
+  if (propertyAnimator.IsAnimating()) {
+      propertyAnimator.Update(*player, elapsed);
+      propertyAnimator.OnComplete([this] {
+          GetPlayerController().ControlActor(GetPlayer());
+          });
+  }
 }
 
 void Overworld::GameArea::onDraw(sf::RenderTexture& surface)
@@ -118,7 +120,10 @@ void Overworld::GameArea::OnTileCollision()
                 std::floor(yWarp / tileSize.y),
                 std::floor(z)
             );
-            if (theWarp.tile.flippedHorizontal) { warpPos2.x -= 1, warpPos2.y -= 1; }
+            if (theWarp.name == "Net Warp") {
+                warpPos2.x -= 1;
+                warpPos2.y -= 1;
+            }
             if (playerPos2 != warpPos2) {
                 continue;
             }

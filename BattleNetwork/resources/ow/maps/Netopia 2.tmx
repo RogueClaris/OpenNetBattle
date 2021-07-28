@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.1" orientation="isometric" renderorder="right-down" width="31" height="29" tilewidth="64" tileheight="32" infinite="0" nextlayerid="14" nextobjectid="41">
+<map version="1.5" tiledversion="1.7.1" orientation="isometric" renderorder="right-down" width="31" height="29" tilewidth="64" tileheight="32" infinite="0" nextlayerid="14" nextobjectid="42">
  <properties>
   <property name="Background" value="lan"/>
   <property name="Name" value="Netopia 2"/>
@@ -52,6 +52,14 @@
     <property name="X" type="float" value="4.5"/>
     <property name="Y" type="float" value="29.5"/>
     <property name="Z" type="float" value="4"/>
+   </properties>
+  </object>
+  <object id="41" name="Net Warp" gid="10" x="512" y="32" width="64" height="40">
+   <properties>
+    <property name="Destination" value="resources/ow/maps/Netopia 3.tmx"/>
+    <property name="X" type="float" value="17.5"/>
+    <property name="Y" type="float" value="31.5"/>
+    <property name="Z" type="float" value="0"/>
    </properties>
   </object>
  </objectgroup>

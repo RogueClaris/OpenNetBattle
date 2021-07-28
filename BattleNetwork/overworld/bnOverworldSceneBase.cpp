@@ -91,45 +91,6 @@ Overworld::SceneBase::SceneBase(swoosh::ActivityController& controller) :
 
   WebAccounts::AccountState account;
 
-  if (WEBCLIENT.IsLoggedIn()) {
-    bool loaded = WEBCLIENT.LoadSession("profile.bin", &account);
-
-    // Quickly load the session on disk to reduce wait times
-    if (loaded) {
-      Logger::Log("Found cached account data");
-
-      WEBCLIENT.UseCachedAccount(account);
-      WEBCLIENT.CacheTextureData(account);
-      folders = CardFolderCollection::ReadFromWebAccount(account);
-      programAdvance = PA::ReadFromWebAccount(account);
-
-      NaviEquipSelectedFolder();
-    }
-
-    Logger::Log("Fetching account data...");
-
-    // resent fetch command to get the a latest account info
-    accountCommandResponse = WEBCLIENT.SendFetchAccountCommand();
-
-    Logger::Log("waiting for server...");
-  }
-  else {
-
-    // If we are not actively online but we have a profile on disk, try to load our previous session
-    // The user may be logging in but has not completed yet and we want to reduce wait times...
-    // Otherwise, use the guest profile
-    bool loaded = WEBCLIENT.LoadSession("profile.bin", &account) || WEBCLIENT.LoadSession("guest.bin", &account);
-
-    if (loaded) {
-      WEBCLIENT.UseCachedAccount(account);
-      WEBCLIENT.CacheTextureData(account);
-      folders = CardFolderCollection::ReadFromWebAccount(account);
-      programAdvance = PA::ReadFromWebAccount(account);
-
-      NaviEquipSelectedFolder();
-    }
-  }
-
   setView(sf::Vector2u(480, 320));
 
   // Spawn overworld player
@@ -294,21 +255,10 @@ void Overworld::SceneBase::onUpdate(double elapsed) {
   // Update the widget
   personalMenu.Update((float)elapsed);
 
-  // Update the emote widget
-  emote.Update(elapsed);
-
-  // Update the active emote
-  emoteNode.Update(elapsed);
-
   // Update the textbox
   menuSystem.Update((float)elapsed);
 
   HandleCamera((float)elapsed);
-
-  // Allow player to resync with remote account by pressing the pause action
-  /*if (Input().Has(InputEvents::pressed_option)) {
-      accountCommandResponse = WEBCLIENT.SendFetchAccountCommand();
-  }*/
 
   
 }
