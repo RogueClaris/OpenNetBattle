@@ -192,6 +192,17 @@ void Overworld::EmoteWidget::draw(sf::RenderTarget& surface, sf::RenderStates st
   }
 }
 
+<<<<<<< HEAD
+=======
+void Overworld::EmoteWidget::Open()
+{
+}
+
+void Overworld::EmoteWidget::Close()
+{
+}
+
+>>>>>>> b787966a (Small backup update)
 void Overworld::EmoteWidget::OnSelect(const std::function<void(Overworld::Emotes)>& callback)
 {
   this->callback = callback;
