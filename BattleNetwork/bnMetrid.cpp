@@ -64,6 +64,11 @@ void Metrid::OnDelete() {
   RemoveMeFromTurnOrder();
 }
 
+void Metrid::OnSpawn(Battle::Tile& start)
+{
+    starterTile = &start;
+}
+
 void Metrid::OnUpdate(double _elapsed) {
   AI<Metrid>::Update(_elapsed);
 }
