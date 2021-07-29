@@ -1,6 +1,7 @@
 #pragma once
 #include "bnCard.h"
 #include "bnCardLibrary.h"
+#include "bnBuiltInCards.h"
 #include <vector>
 #include <algorithm>
 
@@ -108,21 +109,7 @@ public:
    */
   static CardFolder MakeRandomFolder() {
     CardFolder folder;
-    folder.folderSize = folder.initialSize = CardLibrary::GetInstance().GetSize();
-
-    for (int i = 0; i < folder.folderSize; i++) {
-      int random = rand() % CardLibrary::GetInstance().GetSize();
-
-      // the folder contains random parts from the entire library
-      CardLibrary::Iter iter = CardLibrary::GetInstance().Begin();
-
-      while (random-- > 0) {
-        iter++;
-      }
-
-      folder.folderList.push_back(new Battle::Card(*(iter)));
-    }
-
+    folder.folderSize = 30;
     return folder;
   }
 };

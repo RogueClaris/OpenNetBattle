@@ -1,6 +1,8 @@
 #pragma once
 #include "bnOverworldSceneBase.h"
 #include "bnOverworldActorPropertyAnimator.h"
+#include "../bnCardLibrary.h"
+#include "../bnPA.h"
 
 namespace Overworld {
   class GameArea final : public SceneBase {
@@ -15,6 +17,7 @@ namespace Overworld {
     Overworld::TeleportController::Command& teleportIn(sf::Vector3f position, Direction direction);
     bool positionIsInWarp(sf::Vector3f position);
     ActorPropertyAnimator propertyAnimator;
+    bool goToBattle = false;
   public:
     /**
      * @brief Loads the player's library data and loads graphics

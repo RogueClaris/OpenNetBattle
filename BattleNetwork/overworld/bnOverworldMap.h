@@ -147,6 +147,7 @@ namespace Overworld {
         void SetBackgroundCustomVelocity(float x, float y);
         void SetBackgroundCustomVelocity(sf::Vector2f velocity);
         void SetSongPath(const std::string& path);
+        void SetBattleSteps(const std::string& stepString);
         unsigned GetCols() const;
         unsigned GetRows() const;
         unsigned int GetTileCount();
@@ -163,6 +164,16 @@ namespace Overworld {
         bool HasShadow(sf::Vector2i tilePos, int layer);
         bool IsConcealed(sf::Vector2i tilePos, int layer);
         void RemoveSprites(SceneBase& scene);
+        int CurrentBattleSteps = 0;
+        int BattleSteps = 0;
+        int BaseBattleSteps = 0;
+        int MaxBattleSteps = 0;
+        int nextBattleIndex = 0;
+        std::vector<std::string> nextBattleList;
+        void updateBattleSteps();
+        std::string BattleFolderPath;
+        void SetBattleFolderPath(std::string folderPath);
+
 
     protected:
         unsigned cols{}, rows{}; /*!< map is made out of Cols x Rows tiles */

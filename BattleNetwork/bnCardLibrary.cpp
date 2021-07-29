@@ -6,7 +6,7 @@
 #include <algorithm>
 
 CardLibrary::CardLibrary() {
-  LoadLibrary("resources/database/library.txt");
+  LoadLibrary();
 }
 
 
@@ -68,85 +68,10 @@ const int CardLibrary::GetCountOf(const Battle::Card & card)
 }
 
 
-void CardLibrary::LoadLibrary(const std::string& path) {
-  string data = FileUtil::Read(path);
-
-  int endline = 0;
-
-  do {
-    endline = (int)data.find("\n");
-    string line = data.substr(0, endline);
-
-    while (line.compare(0, 1, " ") == 0)
-      line.erase(line.begin()); // remove leading whitespaces
-    while (line.size() > 0 && line.compare(line.size() - 1, 1, " ") == 0)
-      line.erase(line.end() - 1); // remove trailing whitespaces
-
-    if (line[0] == '#') {
-      // Skip comments
-      data = data.substr(endline + 1);
-      continue;
+void CardLibrary::LoadLibrary() {
+    for (auto i = 0; i < BuiltInCards::cardList.size(); i++) {
+        this->AddCard(BuiltInCards::cardList.find(i)->second);
     }
-
-    if (line.find("Card") != string::npos) {
-      string cardID = FileUtil::ValueOf("cardIndex", line);
-      string iconID = FileUtil::ValueOf("iconIndex", line);
-      string name   = FileUtil::ValueOf("name", line);
-      string damage = FileUtil::ValueOf("damage", line);
-      string type = FileUtil::ValueOf("type", line);
-      string codes = FileUtil::ValueOf("codes", line);
-      string description = FileUtil::ValueOf("desc", line);
-      string rarity = FileUtil::ValueOf("rarity", line);
-
-      string longDescription;
-
-      try {
-        longDescription = FileUtil::ValueOf("verbose", line);
-      }
-      catch (...) {
-        longDescription = "This card does not have extra information.";
-      }
-
-      // Trime white space
-      codes.erase(remove_if(codes.begin(), codes.end(), isspace), codes.end());
-
-      // Tokenize the string with delimeter as ','
-      std::istringstream codeStream(codes);
-      string code;
-
-      while (std::getline(codeStream, code, ',')) {
-        // For every code, push this into our database
-        if (code.empty())
-          continue;
-
-        Element elemType = GetElementFromStr(type);
-
-        // Card card = Card(atoi(cardID.c_str()), atoi(iconID.c_str()), code[0], atoi(damage.c_str()), elemType, name, description, longDescription, atoi(rarity.c_str()));
-        // std::list<char> codes = GetCardCodes(card);
-
-        /* Avoid code duplicates
-        if (codes.size() > 0) {
-          bool found = (std::find(codes.begin(), codes.end(), card.GetCode()) != codes.end());
-
-          // Not a duplicate code, make sure information is correct
-          if (!found) {
-            // Simply update an existing card entry by changing the code 
-            Card first = GetCardEntry(card.GetShortName(), *codes.begin());
-            card = Card(first.GetID(), first.GetIconID(), card.GetCode(), first.GetDamage(), first.GetElement(), first.GetShortName(), first.GetDescription(), first.GetVerboseDescription(), first.GetRarity());
-            library.insert(card);
-          }
-        }
-        else { // first entry
-           library.insert(card);
-        }*/
-        // library.insert(card);
-      }
-    }
-
-    data = data.substr(endline + 1);
-  } while (endline > -1);
-
-  Logger::Log(std::string("library size: ") + std::to_string(GetSize()));
 }
 
 const bool CardLibrary::SaveLibrary(const std::string& path) {

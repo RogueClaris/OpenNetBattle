@@ -4,6 +4,7 @@
 #include <exception>
 #include <atomic>
 #include <thread>
+#include <string>
 
 MobRegistration::MobMeta::MobMeta() : placeholderTexture(nullptr)
 {
@@ -133,6 +134,15 @@ const MobRegistration::MobMeta & MobRegistration::At(int index)
     throw std::runtime_error("Roster index out of bounds");
 
   return *(roster.at(index));
+}
+
+const MobRegistration::MobMeta & MobRegistration::Find(std::string name) {
+    for (auto i = 0; i < roster.size(); i++) {
+        if (roster.at(i)->name == name) {
+            return *(roster.at(i));
+        }
+    }
+    return *(roster.at(0));
 }
 
 const unsigned MobRegistration::Size()

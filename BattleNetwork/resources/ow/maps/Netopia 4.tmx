@@ -3,6 +3,9 @@
  <properties>
   <property name="Background Animation" value="resources/scene/ameroppa/bg.animation"/>
   <property name="Background Texture" value="resources/scenes/ameroppa/bg.png"/>
+  <property name="Battle Folder Path" value="resources/mobs"/>
+  <property name="Battle ID List" value="Bubble Battle,Triple Trouble,Fire Frenzy"/>
+  <property name="Battle Steps" value="30000,60000"/>
   <property name="Name" value="Netopia 4"/>
   <property name="Song" value="resources/loops/loop_overworld.ogg"/>
  </properties>

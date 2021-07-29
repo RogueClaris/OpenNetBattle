@@ -194,6 +194,8 @@ public:
    */
   void LoadAllMobs(std::atomic<int>& progress);
 
+  const MobMeta& Find(std::string name);
+
 };
 
 /*! \brief Less typing */

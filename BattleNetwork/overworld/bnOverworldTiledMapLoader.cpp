@@ -284,6 +284,25 @@ namespace Overworld {
       else if (propertyName == "Song") {
         map.SetSongPath(propertyValue);
       }
+      else if (propertyName == "Battle Steps") {
+          map.SetBattleSteps(propertyValue);
+      }
+      else if (propertyName == "Battle Folder Path") {
+          map.SetBattleFolderPath(propertyValue);
+      }
+      else if (propertyName == "Battle ID List") {
+          std::string tmp;
+          std::stringstream ss(propertyValue);
+          std::vector<string> words;
+
+          while (getline(ss, tmp, ',')) {
+              words.push_back(tmp);
+          }
+          for (auto i = 0; i < words.size(); i++) {
+              map.nextBattleList.push_back(words[i]);
+          }
+
+      }
     }
 
     // load tilesets

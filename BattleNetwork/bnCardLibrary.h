@@ -1,5 +1,6 @@
 #pragma once
 #include "bnCard.h"
+#include "bnBuiltInCards.h"
 #include <set>
 #include <list>
 
@@ -108,7 +109,7 @@ protected:
   * with the same name but different code do not count as duplicates. This allows the pool
   * to recognize and expect cards with particular card codes.
   */
-  void LoadLibrary(const std::string& path);
+  void LoadLibrary();
 
 private:
   mutable multiset<Battle::Card, Battle::Card::Compare> library; /*!< the card pool used by all card resources */
