@@ -32,11 +32,12 @@ void MetridMoveState::OnUpdate(double _elapsed, Metrid& met) {
 
   if (target && target->GetTile() && moveCount <= 0 && met.IsMyTurn()) {
     // Try attacking
+    met.ForceTeleport(met.GetCurrentTile());
     return met.ChangeState<MetridAttackState>();
   }
 
   auto myteam = met.GetField()->FindTiles([&met](Battle::Tile* t) {
-    if (t->GetTeam() == met.GetTeam() && t->IsWalkable())
+    if (t->GetTeam() == met.GetTeam() && t->IsWalkable() && t != met.GetCurrentTile())
       return true;
 
     return false;

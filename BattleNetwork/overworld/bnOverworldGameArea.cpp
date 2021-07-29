@@ -1,10 +1,14 @@
 #include <Segues/BlackWashFade.h>
+#include <Segues/WhiteWashFade.h>
 #include "bnOverworldGameArea.h"
 #include "bnOverworldOnlineArea.h"
 #include "../netplay/bnNetPlayConfig.h"
 #include "../bnMessage.h"
 #include "../battlescene/bnMobBattleScene.h"
+#include "../bnMobFactory.h"
+#include "../bnMobRegistration.h"
 #include "bnOverworldMap.h"
+#include <stdlib.h>
 
 using namespace swoosh::types;
 
@@ -15,33 +19,21 @@ Overworld::GameArea::GameArea(
     const std::string& mapPath,
     sf::Vector3f entryPos,
     Direction mapDirection
-    )
+)
     :
     SceneBase(controller)
-    {
-      LoadMap(FileUtil::Read(mapPath));
+{
+    LoadMap(FileUtil::Read(mapPath));
 
-      auto& map = GetMap();
+    auto& map = GetMap();
 
-      // spawn in the player
-      auto player = GetPlayer();
-      auto& command = GetTeleportController().TeleportIn(player, entryPos, mapDirection, true);
-      command.onFinish.Slot([=] {
+    // spawn in the player
+    auto player = GetPlayer();
+    auto& command = GetTeleportController().TeleportIn(player, entryPos, mapDirection, true);
+    command.onFinish.Slot([=] {
         GetPlayerController().ControlActor(player);
-      });
-      XMLElement mapXML = parseXML(FileUtil::Read(mapPath));
-      XMLElement childXML;
-      for (auto& child : mapXML.children) {
-          if (child.name == "properties") {
-              childXML = child;
-              break;
-          }
-      }
-      for (const auto& propertyElement : childXML.children) {
-
-      }
-      this->steps = 0;
-    }
+        });
+}
 
 Overworld::GameArea::~GameArea() {
 }
@@ -50,7 +42,9 @@ void Overworld::GameArea::onUpdate(double elapsed)
 {
   // Update our logic
   auto& map = GetMap();
-
+  if (goToBattle) {
+      return;
+  }
   // do default logic
   SceneBase::onUpdate(elapsed);
 
@@ -74,9 +68,48 @@ void Overworld::GameArea::onUpdate(double elapsed)
           });
   }
   else {
-      auto previousPos = player->getPosition();
-      if (player->getPosition() != previousPos) {
-          this->steps++
+      if (GetTeleportController().IsComplete()) {
+          if (!player->GetAnimationString().find("IDLE")) {
+              Logger::Log("idle");
+          }
+          else {
+              map.updateBattleSteps();
+          }
+          if (map.CurrentBattleSteps >= map.BattleSteps) {
+              srand((unsigned)GetTickCount64());
+              map.nextBattleIndex = std::floor(rand() % map.nextBattleList.size());
+              Logger::Logf("%d", map.nextBattleList.size());
+              Logger::Logf("%d", MobRegistration::GetInstance().Size());
+              std::string checkMob = map.nextBattleList.at(map.nextBattleIndex);
+              Mob* mob = MobRegistration::GetInstance().Find(checkMob).GetMob();
+              Audio().Play(AudioType::PRE_BATTLE, AudioPriority::high);
+              Audio().StopStream();
+              auto& meta = NAVIS.At(GetCurrentNavi());
+              const std::string& image = meta.GetMugshotTexturePath();
+              const std::string& mugshotAnim = meta.GetMugshotAnimationPath();
+              const std::string& emotionsTexture = meta.GetEmotionsTexturePath();
+              auto mugshot = Textures().LoadTextureFromFile(image);
+              auto emotions = Textures().LoadTextureFromFile(emotionsTexture);
+              Player* player = meta.GetNavi();
+              if (!mob->GetBackground()) {
+                  mob->SetBackground(GetBackground());
+              }
+              auto folder = new CardFolder;
+
+              PA PhotonArt;
+              MobBattleProperties props{
+                    { *player, PhotonArt, folder, mob->GetField(), mob->GetBackground() },
+                    MobBattleProperties::RewardBehavior::take,
+                    { mob },
+                    sf::Sprite(*mugshot),
+                    mugshotAnim,
+                    emotions,
+              };
+              using effect = segue<WhiteWashFade>;
+              getController().push<effect::to<MobBattleScene>>(props);
+              goToBattle = true;
+              GetPlayerController().ListenToInputEvents(false);
+          }
       }
   }
 }
@@ -100,6 +133,10 @@ void Overworld::GameArea::onResume()
   SceneBase::onResume();
   Audio().Stream("resources/loops/loop_overworld.ogg", false);
   infocus = true;
+  goToBattle = false;
+  auto& map = GetMap();
+  map.CurrentBattleSteps = 0;
+  GetPlayerController().ListenToInputEvents(true);
 }
 
 void Overworld::GameArea::onLeave()

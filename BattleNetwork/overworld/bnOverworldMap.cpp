@@ -1,8 +1,11 @@
 #include <algorithm>
 #include <cmath>
+#include <string>
+#include <cstdlib>
 
 #include "bnOverworldMap.h"
 #include "bnOverworldSceneBase.h"
+
 
 
 namespace Overworld {
@@ -178,6 +181,35 @@ namespace Overworld {
   void Map::SetSongPath(const std::string& path)
   {
     songPath = path;
+  }
+
+  void Map::SetBattleSteps(const std::string& stepString) {
+      std::string tmp;
+      std::stringstream ss(stepString);
+      std::vector<string> words;
+
+      while (getline(ss, tmp, ',')) {
+          words.push_back(tmp);
+      }
+
+      BaseBattleSteps = (int)(tmp[0]);
+      MaxBattleSteps = (int)(tmp[1]);
+      srand(unsigned(BaseBattleSteps));
+      BattleSteps = (rand() % MaxBattleSteps + 1);
+      if (BattleSteps < BaseBattleSteps) {
+          BattleSteps = BaseBattleSteps;
+      }
+      else if (BattleSteps > MaxBattleSteps) {
+          BattleSteps = MaxBattleSteps;
+      }
+  }
+
+  void Map::updateBattleSteps() {
+      CurrentBattleSteps = CurrentBattleSteps + 1;
+  }
+
+  void Map::SetBattleFolderPath(std::string folderPath) {
+      BattleFolderPath = folderPath;
   }
 
   unsigned Map::GetCols() const

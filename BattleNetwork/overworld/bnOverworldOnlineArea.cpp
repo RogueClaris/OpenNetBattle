@@ -42,7 +42,8 @@ Overworld::OnlineArea::OnlineArea(
     uint16_t port,
     const std::string& connectData,
     uint16_t maxPayloadSize
-) :
+)
+:
     SceneBase(controller),
     transitionText(Font::Style::small),
     nameText(Font::Style::small),
