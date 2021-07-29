@@ -32,7 +32,7 @@ void MetridMoveState::OnUpdate(double _elapsed, Metrid& met) {
 
   if (target && target->GetTile() && moveCount <= 0 && met.IsMyTurn()) {
     // Try attacking
-    met.ForceTeleport(met.GetCurrentTile());
+    met.Teleport(met.starterTile);
     return met.ChangeState<MetridAttackState>();
   }
 

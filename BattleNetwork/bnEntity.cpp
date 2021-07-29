@@ -282,13 +282,6 @@ bool Entity::Teleport(Battle::Tile* dest, ActionOrder order, std::function<void(
   return false;
 }
 
-void Entity::ForceTeleport(Battle::Tile* dest, ActionOrder order, std::function<void()> onBegin) {
-    if (dest) {
-        MoveEvent event = { 0, moveStartupDelay, moveEndlagDelay, 0, dest, onBegin };
-        actionQueue.Add(event, order, ActionDiscardOp::until_eof);
-    }
-}
-
 bool Entity::Slide(Battle::Tile* dest, 
   const frame_time_t& slideTime, const frame_time_t& endlag, ActionOrder order, std::function<void()> onBegin)
 {

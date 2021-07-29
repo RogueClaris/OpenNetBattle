@@ -30,6 +30,8 @@ public:
 
   void OnDelete();
 
+  void OnSpawn(Battle::Tile& start) override;
+
   /**
    * @brief Get the hit height of this entity
    * @return const float
@@ -41,4 +43,5 @@ private:
   float hitHeight; /*!< hit height of this entity */
 
   DefenseRule* virusBody;
+  Battle::Tile* starterTile;
 };

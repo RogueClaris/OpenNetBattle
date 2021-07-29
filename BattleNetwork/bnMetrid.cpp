@@ -64,6 +64,11 @@ void Metrid::OnDelete() {
   RemoveMeFromTurnOrder();
 }
 
+void Metrid::OnSpawn(Battle::Tile& start)
+{
+    starterTile = &start;
+}
+
 void Metrid::OnUpdate(double _elapsed) {
   setPosition(tile->getPosition().x, tile->getPosition().y);
   setPosition(getPosition() + tileOffset);
