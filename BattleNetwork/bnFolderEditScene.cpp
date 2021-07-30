@@ -6,7 +6,6 @@
 #include <Swoosh/Ease.h>
 #include <Swoosh/Timer.h>
 
-#include "bnWebClientMananger.h"
 #include "bnFolderEditScene.h"
 #include "Segues/BlackWashFade.h"
 #include "bnCardLibrary.h"
@@ -710,6 +709,7 @@ void FolderEditScene::onDraw(sf::RenderTexture& surface) {
 }
 
 void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
+<<<<<<< HEAD
     cardDesc.setPosition(sf::Vector2f(26.f, 175.0f));
     scrollbar.setPosition(410.f, 60.f);
     cardHolder.setPosition(16.f, 32.f);
@@ -731,6 +731,59 @@ void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
 
     for (int j = 0; j < folderView.lastCardOnScreen; j++) {
         iter++;
+=======
+  cardDesc.setPosition(sf::Vector2f(26.f, 175.0f));
+  scrollbar.setPosition(410.f, 60.f);
+  cardHolder.setPosition(16.f, 32.f);
+  element.setPosition(2.f*28.f, 136.f);
+  card.setPosition(96.f, 88.f);
+
+  surface.draw(folderDock);
+  surface.draw(cardHolder);
+
+  // ScrollBar limits: Top to bottom screen position when selecting first and last card respectively
+  float top = 50.0f; float bottom = 230.0f;
+  float depth = ((float)folderView.lastCardOnScreen / (float)folderView.numOfCards)*bottom;
+  scrollbar.setPosition(452.f, top + depth);
+
+  surface.draw(scrollbar);
+
+  // Move the card library iterator to the current highlighted card
+  auto iter = folderCardSlots.begin();
+
+  for (int j = 0; j < folderView.lastCardOnScreen; j++) {
+    iter++;
+  }
+
+  // Now that we are at the viewing range, draw each card in the list
+  for (int i = 0; i < folderView.maxCardsOnScreen && folderView.lastCardOnScreen + i < folderView.numOfCards; i++) {
+    const Battle::Card& copy = iter->ViewCard();
+
+    if (!iter->IsEmpty()) {
+      float cardIconY = 66.0f + (32.f*i);
+      cardIcon.setTexture(*Textures().LoadTextureFromFile("resources/cardicons/" + copy.GetShortName() + ".png"));
+      cardIcon.setPosition(2.f*104.f, cardIconY);
+      surface.draw(cardIcon);
+
+      cardLabel.SetColor(sf::Color::White);
+      cardLabel.setPosition(2.f*120.f, cardIconY + 4.0f);
+      cardLabel.SetString(copy.GetShortName());
+      surface.draw(cardLabel);
+
+      int offset = (int)(copy.GetElement());
+      element.setTextureRect(sf::IntRect(14 * offset, 0, 14, 14));
+      element.setPosition(2.f*183.f, cardIconY);
+      surface.draw(element);
+
+      cardLabel.setOrigin(0, 0);
+      cardLabel.setPosition(2.f*200.f, cardIconY + 4.0f);
+      cardLabel.SetString(std::string() + copy.GetCode());
+      surface.draw(cardLabel);
+
+      //Draw MB
+      mbPlaceholder.setPosition(2.f*210.f, cardIconY + 2.0f);
+      surface.draw(mbPlaceholder);
+>>>>>>> c88ccfe8 (Backing up changes.)
     }
 
     // Now that we are at the viewing range, draw each card in the list
@@ -787,6 +840,7 @@ void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
                     surface.draw(cardLabel);
                 }
 
+<<<<<<< HEAD
                 cardLabel.setOrigin(0, 0);
                 cardLabel.SetColor(sf::Color::Yellow);
                 cardLabel.setPosition(2.f * 16.f, 142.f);
@@ -796,6 +850,18 @@ void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
                 std::string formatted = FormatCardDesc(copy.GetDescription());
                 cardDesc.SetString(formatted);
                 surface.draw(cardDesc);
+=======
+        card.setTexture(*Textures().LoadTextureFromFile("resources/cardimages/" + copy.GetShortName() + ".png"));
+        card.setScale((float)swoosh::ease::linear(cardRevealTimer.getElapsed().asSeconds(), 0.25f, 1.0f)*2.0f, 2.0f);
+        surface.draw(card);
+
+        // This draws the currently highlighted card
+        if (copy.GetDamage() > 0) {
+          cardLabel.SetColor(sf::Color::White);
+          cardLabel.SetString(std::to_string(copy.GetDamage()));
+          cardLabel.setOrigin(cardLabel.GetLocalBounds().width + cardLabel.GetLocalBounds().left, 0);
+          cardLabel.setPosition(2.f*80.f, 152.f);
+>>>>>>> c88ccfe8 (Backing up changes.)
 
                 int offset = (int)(copy.GetElement());
                 element.setTextureRect(sf::IntRect(14 * offset, 0, 14, 14));
@@ -818,6 +884,7 @@ void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
 }
 
 void FolderEditScene::DrawPool(sf::RenderTarget& surface) {
+<<<<<<< HEAD
     cardDesc.setPosition(sf::Vector2f(320.f + 480.f, 175.0f));
     packCardHolder.setPosition(310.f + 480.f, 35.f);
     element.setPosition(400.f + 2.f * 20.f + 480.f, 146.f);
@@ -860,11 +927,119 @@ void FolderEditScene::DrawPool(sf::RenderTarget& surface) {
         element.setTextureRect(sf::IntRect(14 * offset, 0, 14, 14));
         element.setPosition(182.0f + 480.f, 65.0f + (32.f * i));
         surface.draw(element);
+=======
+  cardDesc.setPosition(sf::Vector2f(320.f + 480.f, 175.0f));
+  packCardHolder.setPosition(310.f + 480.f, 35.f);
+  element.setPosition(400.f + 2.f*20.f + 480.f, 146.f);
+  card.setPosition(389.f + 480.f, 93.f);
+
+  surface.draw(packDock);
+  surface.draw(packCardHolder);
+
+  // ScrollBar limits: Top to bottom screen position when selecting first and last card respectively
+  float top = 50.0f; float bottom = 230.0f;
+  float depth = ((float)packView.lastCardOnScreen / (float)packView.numOfCards)*bottom;
+  scrollbar.setPosition(292.f + 480.f, top + depth);
+
+  surface.draw(scrollbar);
+
+  if (packView.numOfCards == 0) return;
+
+  // Move the card library iterator to the current highlighted card
+  auto iter = poolCardBuckets.begin();
+
+  for (int j = 0; j < packView.lastCardOnScreen; j++) {
+    iter++;
+  }
+
+  // Now that we are at the viewing range, draw each card in the list
+  for (int i = 0; i < packView.maxCardsOnScreen && packView.lastCardOnScreen + i < packView.numOfCards; i++) {
+    int count = iter->GetCount();
+    const Battle::Card& copy = iter->ViewCard();
+
+    cardIcon.setTexture(*Textures().LoadTextureFromFile("resources/cardicons/" + copy.GetShortName() + ".png"));
+    cardIcon.setPosition(16.f + 480.f, 65.0f + (32.f*i));
+    surface.draw(cardIcon);
+
+    cardLabel.SetColor(sf::Color::White);
+    cardLabel.setPosition(49.f + 480.f, 69.0f + (32.f*i));
+    cardLabel.SetString(copy.GetShortName());
+    surface.draw(cardLabel);
+
+    int offset = (int)(copy.GetElement());
+    element.setTextureRect(sf::IntRect(14 * offset, 0, 14, 14));
+    element.setPosition(182.0f + 480.f, 65.0f + (32.f*i));
+    surface.draw(element);
+
+    cardLabel.setOrigin(0, 0);
+    cardLabel.setPosition(216.f + 480.f, 69.0f + (32.f*i));
+    cardLabel.SetString(std::string() + copy.GetCode());
+    surface.draw(cardLabel);
+
+    //Draw MB
+    mbPlaceholder.setPosition(236.f + 480.f, 67.0f + (32.f * i));
+    surface.draw(mbPlaceholder);
+
+    // Draw count in pack
+    cardLabel.setOrigin(0, 0);
+    cardLabel.setPosition(274.f + 480.f, 69.0f + (32.f*i));
+    cardLabel.SetString(std::to_string(count));
+    surface.draw(cardLabel);
+
+    // Draw cursor
+    if (packView.lastCardOnScreen + i == packView.currCardIndex) {
+      auto y = swoosh::ease::interpolate((float)frameElapsed*7.f, packCursor.getPosition().y, 64.0f + (32.f*i));
+      auto bounce = std::sin((float)totalTimeElapsed*10.0f)*2.0f;
+
+      packCursor.setPosition(bounce + 480.f + 2.f, y);
+      surface.draw(packCursor);
+
+      card.setTexture(*Textures().LoadTextureFromFile("resources/cardimages/" + copy.GetShortName() + ".png"));
+      card.setTextureRect(sf::IntRect{ 0,0,56,48 });
+      card.setScale((float)swoosh::ease::linear(cardRevealTimer.getElapsed().asSeconds(), 0.25f, 1.0f)*2.0f, 2.0f);
+      surface.draw(card);
+
+      // This draws the currently highlighted card
+      if (copy.GetDamage() > 0) {
+        cardLabel.SetColor(sf::Color::White);
+        cardLabel.SetString(std::to_string(copy.GetDamage()));
+        cardLabel.setOrigin(cardLabel.GetLocalBounds().width + cardLabel.GetLocalBounds().left, 0);
+        cardLabel.setPosition(2.f*(223.f) + 480.f, 145.f);
+>>>>>>> c88ccfe8 (Backing up changes.)
 
         cardLabel.setOrigin(0, 0);
         cardLabel.setPosition(216.f + 480.f, 69.0f + (32.f * i));
         cardLabel.SetString(std::string() + copy.GetCode());
         surface.draw(cardLabel);
+<<<<<<< HEAD
+=======
+      }
+
+      cardLabel.setOrigin(0, 0);
+      cardLabel.SetColor(sf::Color::Yellow);
+      cardLabel.setPosition(2.f*167.f + 480.f, 145.f);
+      cardLabel.SetString(std::string() + copy.GetCode());
+      surface.draw(cardLabel);
+
+      std::string formatted = FormatCardDesc(copy.GetDescription());
+      cardDesc.SetString(formatted);
+      surface.draw(cardDesc);
+
+      int offset = (int)(copy.GetElement());
+      element.setTextureRect(sf::IntRect(14 * offset, 0, 14, 14));
+      element.setPosition(2.f*179.f + 480.f, 142.f);
+      surface.draw(element);
+    }
+    
+    if (packView.lastCardOnScreen + i == packView.swapCardIndex && (int(totalTimeElapsed*1000) % 2 == 0)) {
+      auto y =  64.0f + (32.f*i);
+
+      packSwapCursor.setPosition(485.f + 2.f + 2.f, y);
+      packSwapCursor.setColor(sf::Color(255, 255, 255, 200));
+      surface.draw(packSwapCursor);
+      packSwapCursor.setColor(sf::Color::White);
+    }
+>>>>>>> c88ccfe8 (Backing up changes.)
 
         //Draw MB
         mbPlaceholder.setPosition(236.f + 480.f, 67.0f + (32.f * i));

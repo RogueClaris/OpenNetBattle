@@ -23,6 +23,7 @@
 #include "../bnLanBackground.h"
 #include "../bnGraveyardBackground.h"
 #include "../bnVirusBackground.h"
+#include "../bnGameOverScene.h"
 
 // Combos are counted if more than one enemy is hit within x frames
 // The game is clocked to display 60 frames per second
@@ -474,7 +475,7 @@ void BattleSceneBase::onUpdate(double elapsed) {
   newMobSize = mob? mob->GetMobCount() : 0;
 
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
-    Quit(FadeOut::white);
+    Quit(QuitMode::white);
     Audio().StopStream();
   }
 
@@ -654,13 +655,6 @@ void BattleSceneBase::onDraw(sf::RenderTexture& surface) {
   if (current) current->onDraw(surface);
 }
 
-void BattleSceneBase::onEnd()
-{
-  if (this->onEndCallback) {
-    this->onEndCallback(battleResults);
-  }
-}
-
 bool BattleSceneBase::IsPlayerDeleted() const
 {
   return isPlayerDeleted;
@@ -765,7 +759,7 @@ std::vector<std::reference_wrapper<const Character>> BattleSceneBase::MobList()
   return mobList;
 }
 
-void BattleSceneBase::Quit(const FadeOut& mode) {
+void BattleSceneBase::Quit(const QuitMode& mode) {
   if(quitting) return; 
 
   // end the current state
@@ -777,19 +771,33 @@ void BattleSceneBase::Quit(const FadeOut& mode) {
   // Depending on the mode, use Swoosh's 
   // activity controller to fadeout with the right
   // visual appearance
-  if(mode == FadeOut::white) {
+  if(mode == QuitMode::white) {
+    if (this->onEndCallback) {
+        this->onEndCallback(battleResults);
+    }
     getController().pop<segue<WhiteWashFade>>();
-  } else if(mode == FadeOut::black) {
+  } else if(mode == QuitMode::black) {
+    if (this->onEndCallback) {
+        this->onEndCallback(battleResults);
+    }
     getController().pop<segue<BlackWashFade>>();
   }
-  else {
-    // mode == FadeOut::pixelate
+  else if(mode == QuitMode::pixelate) {
+    if (this->onEndCallback) {
+        this->onEndCallback(battleResults);
+    }
     getController().pop<segue<PixelateBlackWashFade>>();
+  }
+  else if (mode == QuitMode::game_over) {
+    getController().rewind<segue<BlackWashFade>::to<GameOverScene>>();
   }
 
   quitting = true;
 }
 
+void BattleSceneBase::onEnd()
+{
+}
 
 // what to do if we inject a UIComponent, add it to the update and topmost scenenode stack
 void BattleSceneBase::Inject(MobHealthUI& other)

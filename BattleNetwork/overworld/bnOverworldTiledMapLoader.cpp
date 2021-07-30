@@ -290,6 +290,9 @@ namespace Overworld {
       else if (propertyName == "Battle Folder Path") {
           map.SetBattleFolderPath(propertyValue);
       }
+      else if (propertyName == "Encounterable") {
+          map.isEncounter = propertyElement.GetAttributeInt("Encounterable");
+      }
       else if (propertyName == "Battle ID List") {
           std::string tmp;
           std::stringstream ss(propertyValue);

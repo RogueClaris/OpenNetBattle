@@ -2,15 +2,15 @@
 #include <Segues/WhiteWashFade.h>
 
 #include "bnGameOverScene.h"
-#include "overworld/bnOverworldHomepage.h"
+#include "bnTitleScene.h"
 
 using namespace swoosh::types;
 
 GameOverScene::GameOverScene(swoosh::ActivityController& controller) : Scene(controller) {
   fadeInCooldown = 2.0f;
 
-  gameOver.setTexture(*Textures().GetTexture(TextureType::GAME_OVER));
-  gameOver.setScale(2.f, 2.f);
+  gameOver.setTexture(*Textures().LoadTextureFromFile("resources/scenes/game_over/game_over.png"));
+  gameOver.setScale(1, 1);
   gameOver.setOrigin(gameOver.getLocalBounds().width / 2, gameOver.getLocalBounds().height / 2);
 
   leave = false;
@@ -50,8 +50,7 @@ void GameOverScene::onUpdate(double elapsed) {
 
       leave = false;
 
-      using effect = segue<WhiteWashFade, milliseconds<500>>;
-      getController().push<effect::to<Overworld::Homepage>>();
+      getController().rewind<segue<WhiteWashFade>::to<TitleScene>>();
     }
   }
 }

@@ -8,6 +8,8 @@
 #include "../bnMobFactory.h"
 #include "../bnMobRegistration.h"
 #include "bnOverworldMap.h"
+#include "../bnGameOverScene.h"
+#include "../bnCardFolderCollection.h"
 #include <stdlib.h>
 
 using namespace swoosh::types;
@@ -68,7 +70,7 @@ void Overworld::GameArea::onUpdate(double elapsed)
           });
   }
   else {
-      if (GetTeleportController().IsComplete()) {
+      if (GetTeleportController().IsComplete() && !map.isEncounter) {
           if (!player->GetAnimationString().find("IDLE")) {
               Logger::Log("idle");
           }
@@ -94,8 +96,9 @@ void Overworld::GameArea::onUpdate(double elapsed)
               if (!mob->GetBackground()) {
                   mob->SetBackground(GetBackground());
               }
-              auto folder = new CardFolder;
-
+              
+              //auto folder2 = folder->Clone();
+              //folder2->Shuffle();
               PA PhotonArt;
               MobBattleProperties props{
                     { *player, PhotonArt, folder, mob->GetField(), mob->GetBackground() },
@@ -106,9 +109,12 @@ void Overworld::GameArea::onUpdate(double elapsed)
                     emotions,
               };
               using effect = segue<WhiteWashFade>;
-              getController().push<effect::to<MobBattleScene>>(props);
-              goToBattle = true;
+              auto handleBattleResult = [this](const BattleResults& results) {
+                  GetPlayerSession()->health = results.playerHealth; //BN2+ HP retention; remove for BN1 HP restoration.
+              };
+              getController().push<effect::to<MobBattleScene>>(props, handleBattleResult);
               GetPlayerController().ListenToInputEvents(false);
+              goToBattle = true;
           }
       }
   }
@@ -135,7 +141,15 @@ void Overworld::GameArea::onResume()
   infocus = true;
   goToBattle = false;
   auto& map = GetMap();
+  srand(unsigned(GetTickCount64()));
   map.CurrentBattleSteps = 0;
+  map.BattleSteps = rand() % map.MaxBattleSteps;
+  if (map.BattleSteps < map.BaseBattleSteps) {
+      map.BattleSteps = map.BaseBattleSteps;
+  }
+  else if (map.BattleSteps > map.MaxBattleSteps) {
+      map.BattleSteps = map.MaxBattleSteps;
+  }
   GetPlayerController().ListenToInputEvents(true);
 }
 

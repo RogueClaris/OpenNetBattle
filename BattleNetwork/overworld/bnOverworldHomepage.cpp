@@ -33,7 +33,7 @@ Overworld::Homepage::Homepage(swoosh::ActivityController& controller) :
 
   if (remotePort > 0 && cyberworld.size()) {
     try {
-      remoteAddress = Poco::Net::SocketAddress(cyberworld, remotePort);
+        remoteAddress = Poco::Net::SocketAddress(cyberworld, remotePort);
 
       packetProcessor = std::make_shared<Overworld::PollingPacketProcessor>(
         remoteAddress,

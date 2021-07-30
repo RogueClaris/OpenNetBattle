@@ -169,6 +169,7 @@ namespace Overworld {
         int BaseBattleSteps = 0;
         int MaxBattleSteps = 0;
         int nextBattleIndex = 0;
+        bool isEncounter = true;
         std::vector<std::string> nextBattleList;
         void updateBattleSteps();
         std::string BattleFolderPath;

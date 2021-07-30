@@ -19,6 +19,7 @@ struct MobBattleProperties {
   sf::Sprite mug; // speaker mugshot
   Animation anim; // mugshot animation
   std::shared_ptr<sf::Texture> emotion; // emotion atlas image
+  bool permadeath = true;
 };
 
 /*
