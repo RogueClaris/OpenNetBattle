@@ -25,6 +25,7 @@
 #include "bnInputHandle.h"
 #include "overworld/bnOverworldHomepage.h"
 #include "SFML/System.hpp"
+#include "bnCardFolderCollection.h"
 
 Game::Game(DrawWindow& window) : 
   window(window), 

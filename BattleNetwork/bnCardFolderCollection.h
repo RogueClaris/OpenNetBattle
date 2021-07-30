@@ -177,6 +177,31 @@ public:
    * 
    * If a card is malformed, it will show erroneous info on the menus and won't be used in battle
    */
+
+  static CardFolderCollection BuildStarterFolder() {
+      CardFolderCollection collection;
+      std::string name = "LanFldr";
+      if (collection.MakeFolder(name)) {
+          int currIndex = collection.FindFolder(name);
+          if (currIndex != -1) {
+              CardFolder* currFolder = nullptr;
+              collection.GetFolder(currIndex, currFolder);
+              currFolder->AddCard(BuiltInCards::cardList.at("Cannon A"));
+              currFolder->AddCard(BuiltInCards::cardList.at("Cannon B"));
+              currFolder->AddCard(BuiltInCards::cardList.at("Cannon C"));
+              currFolder->AddCard(BuiltInCards::cardList.at("Cannon *"));
+              currFolder->AddCard(BuiltInCards::cardList.at("Yoyo1 L"));
+              currFolder->AddCard(BuiltInCards::cardList.at("Yoyo1 M"));
+              currFolder->AddCard(BuiltInCards::cardList.at("Yoyo1 N"));
+              currFolder->AddCard(BuiltInCards::cardList.at("Windrack F"));
+              currFolder->AddCard(BuiltInCards::cardList.at("Sword A"));
+              currFolder->AddCard(BuiltInCards::cardList.at("Vulcan C"));
+              currFolder->AddCard(BuiltInCards::cardList.at("Vulcan D"));
+              currFolder->AddCard(BuiltInCards::cardList.at("Vulcan E"));
+          }
+      }
+  }
+
   static CardFolderCollection ReadFromFile(const std::string& path) {
     string data = FileUtil::Read(path);
 
@@ -230,12 +255,6 @@ public:
 
     return collection;
   }
-
-  static CardFolderCollection MakeDefaultFolder() {
-      CardFolderCollection collection;
-      CardFolder* currFolder = nullptr;
-
-  };
 
   static CardFolderCollection ReadFromWebAccount(const WebAccounts::AccountState& account) {
       CardFolderCollection collection;

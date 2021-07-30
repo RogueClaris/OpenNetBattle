@@ -98,8 +98,12 @@ void CardSelectionCust::SetSelectedFormIndex(int index)
 {
   if (selectedFormIndex != index)
   {
+<<<<<<< HEAD
     previousFormItem = currentFormItem;
     previousFormIndex = selectedFormIndex;
+=======
+      Logger::Logf("%d", index);
+>>>>>>> 71b496d9 (Backing up changes; working on cross canceling.)
     selectedFormIndex = index;
     Broadcast(index);
   }
@@ -421,6 +425,10 @@ bool CardSelectionCust::CursorCancel() {
     newSelectCount = 0;
   }
   
+<<<<<<< HEAD
+=======
+
+>>>>>>> 71b496d9 (Backing up changes; working on cross canceling.)
   // Everything is selectable again
   for (int i = 0; i < cardCount; i++) {
     queue[i].state = Bucket::state::staged;
@@ -430,6 +438,22 @@ bool CardSelectionCust::CursorCancel() {
     newSelectQueue[i]->state = Bucket::state::queued;
   }
 
+<<<<<<< HEAD
+=======
+  if (newSelectCount == 0) {
+    newHand = false;
+    Logger::Logf("%d", GetSelectedFormIndex());
+    if (GetSelectedFormIndex() != -1) {
+        SetSelectedFormIndex(-1);
+    }
+    // This is also where beastout card would be removed from queue
+    // when beastout is available
+
+    emblem.UndoWireEffect();
+    return true;
+  }
+
+>>>>>>> 71b496d9 (Backing up changes; working on cross canceling.)
   /*
     Compatible card states are built upon adding cards from the last available card states.
     The only way to "revert" to the last compatible card states is to step through the already selected
