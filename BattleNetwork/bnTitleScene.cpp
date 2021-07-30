@@ -116,18 +116,18 @@ void TitleScene::onUpdate(double elapsed)
 
     static bool doOnce = true;
 
-    if (doOnce) {
-      doOnce = false;
+    //if (doOnce) {
+    //  doOnce = false;
 
-      if (loginResult.valid()) {
-        if (loginResult.get()) {
-          Logger::Logf("Logged in successfully!");
-        }
-        else {
-          Logger::Logf("Could not log in!");
-        }
-      }
-    }
+    //  if (loginResult.valid()) {
+    //    if (loginResult.get()) {
+    //      Logger::Logf("Logged in successfully!");
+    //    }
+    //    else {
+    //      Logger::Logf("Could not log in!");
+    //    }
+    //  }
+    //}
 
     if (Input().Has(InputEvents::pressed_pause) && !pressedStart) {
       pressedStart = true;

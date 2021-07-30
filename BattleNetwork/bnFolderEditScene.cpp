@@ -211,7 +211,7 @@ FolderEditScene::FolderEditScene(swoosh::ActivityController &controller, CardFol
 
   cardIcon = sf::Sprite();
   cardIcon.setTextureRect(sf::IntRect(0, 0, 14, 14));
-  cardIcon.setScale(2.f, 2.f);
+  cardIcon.setScale(1.f, 1.f);
 
   cardRevealTimer.start();
   easeInTimer.start();
