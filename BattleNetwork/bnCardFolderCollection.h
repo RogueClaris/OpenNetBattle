@@ -231,6 +231,12 @@ public:
     return collection;
   }
 
+  static CardFolderCollection MakeDefaultFolder() {
+      CardFolderCollection collection;
+      CardFolder* currFolder = nullptr;
+
+  };
+
   static CardFolderCollection ReadFromWebAccount(const WebAccounts::AccountState& account) {
       CardFolderCollection collection;
       CardFolder* currFolder = nullptr;

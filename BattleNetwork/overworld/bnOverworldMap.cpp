@@ -192,10 +192,10 @@ namespace Overworld {
           words.push_back(tmp);
       }
 
-      BaseBattleSteps = (int)(tmp[0]);
-      MaxBattleSteps = (int)(tmp[1]);
-      srand(unsigned(BaseBattleSteps));
-      BattleSteps = (rand() % MaxBattleSteps + 1);
+      BaseBattleSteps = (int)(tmp[0])*6;
+      MaxBattleSteps = (int)(tmp[1])*6;
+      srand(unsigned(GetTickCount64()));
+      BattleSteps = (rand() % MaxBattleSteps);
       if (BattleSteps < BaseBattleSteps) {
           BattleSteps = BaseBattleSteps;
       }

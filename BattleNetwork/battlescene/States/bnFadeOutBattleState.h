@@ -3,10 +3,11 @@
 #include "../bnBattleSceneState.h"
 
 // modes for fading out style
-enum class FadeOut : int {
+enum class QuitMode : int {
     white = 0,
     black,
-    pixelate
+    pixelate,
+    game_over
 };
 
 class Player;
@@ -18,11 +19,11 @@ class Player;
 */
 class FadeOutBattleState final : public BattleSceneState {
   bool keepPlaying{ true };
-  FadeOut mode;
+  QuitMode mode;
   double wait{ 2 }; // in seconds
   std::vector<Player*>& tracked;
 public:
-  FadeOutBattleState(const FadeOut& mode, std::vector<Player*>& tracked);
+  FadeOutBattleState(const QuitMode& mode, std::vector<Player*>& tracked);
 
   void onStart(const BattleSceneState* last) override;
   void onEnd(const BattleSceneState* next) override;

@@ -69,8 +69,9 @@ const int CardLibrary::GetCountOf(const Battle::Card & card)
 
 
 void CardLibrary::LoadLibrary() {
-    for (auto i = 0; i < BuiltInCards::cardList.size(); i++) {
-        this->AddCard(BuiltInCards::cardList.find(i)->second);
+
+    for (const auto& [key, value] : BuiltInCards::cardList) {
+        AddCard(value);
     }
 }
 

@@ -57,7 +57,7 @@ NetworkBattleScene::NetworkBattleScene(ActivityController& controller, const Net
 
   packetProcessor = props.packetProcessor;
   packetProcessor->SetKickCallback([this] {
-    this->Quit(FadeOut::black);
+    this->Quit(QuitMode::black);
   });
 
   packetProcessor->SetPacketBodyCallback([this](NetPlaySignals header, const Poco::Buffer<char>& buffer) {
@@ -89,7 +89,7 @@ NetworkBattleScene::NetworkBattleScene(ActivityController& controller, const Net
   auto battlestart = AddState<BattleStartBattleState>(players);
   auto battleover = AddState<BattleOverBattleState>(players);
   auto timeFreeze = AddState<TimeFreezeBattleState>();
-  auto fadeout = AddState<FadeOutBattleState>(FadeOut::black, players); // this state requires arguments
+  auto fadeout = AddState<FadeOutBattleState>(QuitMode::black, players); // this state requires arguments
 
   // We need to respond to new events later, create a resuable pointer to these states
   timeFreezePtr = &timeFreeze.Unwrap();
@@ -666,7 +666,7 @@ void NetworkBattleScene::recieveLoserSignal()
 {
   // TODO: replace this with PVP win information
   packetProcessor->EnableKickForSilence(false);
-  this->Quit(FadeOut::black);
+  this->Quit(QuitMode::black);
 }
 
 void NetworkBattleScene::recieveRequestedCardSelectSignal()

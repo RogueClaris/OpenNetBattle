@@ -80,7 +80,7 @@ void RewardBattleState::onDraw(sf::RenderTexture& surface)
           } // else if health, zenny, frags... etc
         }
 
-        GetScene().Quit(FadeOut::black);
+        GetScene().Quit(QuitMode::black);
       }
       else {
         battleResultsWidget->CursorAction();

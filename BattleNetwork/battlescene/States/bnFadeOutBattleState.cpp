@@ -4,7 +4,7 @@
 #include "../../bnPlayer.h"
 #include "../../bnField.h"
 
-FadeOutBattleState::FadeOutBattleState(const FadeOut& mode, std::vector<Player*>& tracked) : mode(mode), tracked(tracked) {}
+FadeOutBattleState::FadeOutBattleState(const QuitMode& mode, std::vector<Player*>& tracked) : mode(mode), tracked(tracked) {}
 
 void FadeOutBattleState::onStart(const BattleSceneState*) {
   for (auto p : tracked) {

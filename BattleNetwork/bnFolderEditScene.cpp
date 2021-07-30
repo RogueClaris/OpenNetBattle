@@ -6,7 +6,6 @@
 #include <Swoosh/Ease.h>
 #include <Swoosh/Timer.h>
 
-#include "bnWebClientMananger.h"
 #include "bnFolderEditScene.h"
 #include "Segues/BlackWashFade.h"
 #include "bnCardLibrary.h"
@@ -701,8 +700,7 @@ void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
 
     if (!iter->IsEmpty()) {
       float cardIconY = 66.0f + (32.f*i);
-
-      cardIcon.setTexture(*WEBCLIENT.GetIconForCard(copy.GetUUID()));
+      cardIcon.setTexture(*Textures().LoadTextureFromFile("resources/cardicons/" + copy.GetShortName() + ".png"));
       cardIcon.setPosition(2.f*104.f, cardIconY);
       surface.draw(cardIcon);
 
@@ -736,7 +734,7 @@ void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
 
       if (!iter->IsEmpty()) {
 
-        card.setTexture(*WEBCLIENT.GetImageForCard(copy.GetUUID()));
+        card.setTexture(*Textures().LoadTextureFromFile("resources/cardimages/" + copy.GetShortName() + ".png"));
         card.setScale((float)swoosh::ease::linear(cardRevealTimer.getElapsed().asSeconds(), 0.25f, 1.0f)*2.0f, 2.0f);
         surface.draw(card);
 
@@ -745,7 +743,7 @@ void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
           cardLabel.SetColor(sf::Color::White);
           cardLabel.SetString(std::to_string(copy.GetDamage()));
           cardLabel.setOrigin(cardLabel.GetLocalBounds().width + cardLabel.GetLocalBounds().left, 0);
-          cardLabel.setPosition(2.f*80.f, 142.f);
+          cardLabel.setPosition(2.f*80.f, 152.f);
 
           surface.draw(cardLabel);
         }
@@ -810,7 +808,7 @@ void FolderEditScene::DrawPool(sf::RenderTarget& surface) {
     int count = iter->GetCount();
     const Battle::Card& copy = iter->ViewCard();
 
-    cardIcon.setTexture(*WEBCLIENT.GetIconForCard(copy.GetUUID()));
+    cardIcon.setTexture(*Textures().LoadTextureFromFile("resources/cardicons/" + copy.GetShortName() + ".png"));
     cardIcon.setPosition(16.f + 480.f, 65.0f + (32.f*i));
     surface.draw(cardIcon);
 
@@ -847,7 +845,7 @@ void FolderEditScene::DrawPool(sf::RenderTarget& surface) {
       packCursor.setPosition(bounce + 480.f + 2.f, y);
       surface.draw(packCursor);
 
-      card.setTexture(*WEBCLIENT.GetImageForCard(poolCardBuckets[packView.currCardIndex].ViewCard().GetUUID()));
+      card.setTexture(*Textures().LoadTextureFromFile("resources/cardimages/" + copy.GetShortName() + ".png"));
       card.setTextureRect(sf::IntRect{ 0,0,56,48 });
       card.setScale((float)swoosh::ease::linear(cardRevealTimer.getElapsed().asSeconds(), 0.25f, 1.0f)*2.0f, 2.0f);
       surface.draw(card);
@@ -857,14 +855,14 @@ void FolderEditScene::DrawPool(sf::RenderTarget& surface) {
         cardLabel.SetColor(sf::Color::White);
         cardLabel.SetString(std::to_string(copy.GetDamage()));
         cardLabel.setOrigin(cardLabel.GetLocalBounds().width + cardLabel.GetLocalBounds().left, 0);
-        cardLabel.setPosition(2.f*(223.f) + 480.f, 135.f);
+        cardLabel.setPosition(2.f*(223.f) + 480.f, 145.f);
 
         surface.draw(cardLabel);
       }
 
       cardLabel.setOrigin(0, 0);
       cardLabel.SetColor(sf::Color::Yellow);
-      cardLabel.setPosition(2.f*167.f + 480.f, 135.f);
+      cardLabel.setPosition(2.f*167.f + 480.f, 145.f);
       cardLabel.SetString(std::string() + copy.GetCode());
       surface.draw(cardLabel);
 

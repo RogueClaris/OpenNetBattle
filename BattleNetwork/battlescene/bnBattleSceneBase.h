@@ -355,7 +355,7 @@ public:
   /*
       \brief Forces the creation a fadeout state onto the state pointer and goes back to the last scene
   */
-  void Quit(const FadeOut& mode);
+  void Quit(const QuitMode& mode);
 
   /**
     * @brief Inject uses double-visitor design pattern. BattleScene adds component to draw and update list.

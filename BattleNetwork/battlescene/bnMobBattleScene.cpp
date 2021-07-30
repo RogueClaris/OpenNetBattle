@@ -57,7 +57,8 @@ MobBattleScene::MobBattleScene(ActivityController& controller, const MobBattlePr
   auto battleover  = AddState<BattleOverBattleState>(players);
   auto timeFreeze  = AddState<TimeFreezeBattleState>();
   auto reward      = AddState<RewardBattleState>(current, &props.base.player, &playerHitCount);
-  auto fadeout     = AddState<FadeOutBattleState>(FadeOut::black, players);
+  auto fadeout     = AddState<FadeOutBattleState>(QuitMode::black, players);
+  auto died        = AddState<FadeOutBattleState>(QuitMode::game_over, players);
 
   // TODO: create a textbox in the battle scene and supply it to the card select widget and other states...
   auto retreat     = AddState<RetreatBattleState>(GetCardSelectWidget().GetTextBox(), props.mug, props.anim);
@@ -156,14 +157,29 @@ MobBattleScene::MobBattleScene(ActivityController& controller, const MobBattlePr
 
     return changeState;
   };
+  
+  auto onPermadeath = [combat, props]() {
+      if (combat->PlayerLost() && props.permadeath) {
+          return true;
+      }
+      return false;
+  };
+
+  auto onFadeout = [combat, props]() {
+      if (combat->PlayerLost() && !props.permadeath) {
+          return true;
+      }
+      return false;
+  };
 
   // combat has multiple state interruptions based on events
   // so we can chain them together
   combat.ChangeOnEvent(battleover, &CombatBattleState::PlayerWon)
-    .ChangeOnEvent(forms, playerDecrosses)
-    .ChangeOnEvent(fadeout, &CombatBattleState::PlayerLost)
-    .ChangeOnEvent(cardSelect, &CombatBattleState::PlayerRequestCardSelect)
-    .ChangeOnEvent(timeFreeze, &CombatBattleState::HasTimeFreeze);
+      .ChangeOnEvent(forms, playerDecrosses)
+      .ChangeOnEvent(died, onPermadeath)
+      .ChangeOnEvent(fadeout, onFadeout)
+      .ChangeOnEvent(cardSelect, &CombatBattleState::PlayerRequestCardSelect)
+      .ChangeOnEvent(timeFreeze, &CombatBattleState::HasTimeFreeze);
 
   // Time freeze state interrupts combat state which must resume after animations are finished
   timeFreeze.ChangeOnEvent(combat, &TimeFreezeBattleState::IsOver);
