@@ -90,12 +90,9 @@ void Overworld::GameArea::onUpdate(double elapsed)
                   if (!mob->GetBackground()) {
                       mob->SetBackground(GetBackground());
                   }
-                  CardFolderCollection collection;
-                  auto folder = new CardFolder();
-                  if (collection.GetFolder(0, folder) == true) {
-                      std::optional<CardFolder*> folder = GetSelectedFolder();
-                  }
                   PA PhotonArt;
+                  CardFolderCollection collection;
+                  CardFolder* folder = collection.GetEquippedFolder()->Clone();
                   MobBattleProperties props{
                         { *player, PhotonArt, folder, mob->GetField(), mob->GetBackground() },
                         MobBattleProperties::RewardBehavior::take,

@@ -22,6 +22,7 @@ private:
   std::vector<std::string> errors; /*!< Error messages from folder source provider*/
 public:
   typedef std::vector<Battle::Card*>::const_iterator Iter;
+  bool equipped = false;
 
   /** 
    * @brief Empty folder

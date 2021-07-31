@@ -98,7 +98,8 @@ void CardSelectionCust::SetSelectedFormIndex(int index)
 {
   if (selectedFormIndex != index)
   {
-      Logger::Logf("%d", index);
+    previousFormItem = currentFormItem;
+    previousFormIndex = selectedFormIndex;
     selectedFormIndex = index;
     Broadcast(index);
   }
@@ -419,12 +420,11 @@ bool CardSelectionCust::CursorCancel() {
 
   if (newSelectCount == 0) {
     newHand = false;
-    if (GetSelectedFormIndex() != -1) {
+    if (lockedInFormIndex != GetSelectedFormIndex()) {
+        currentFormItem.setTexture(*previousFormItem.getTexture());
+        SetSelectedFormIndex(previousFormIndex);
         selectedFormRow = -1;
-        formCursorRow = 0;
-        cursorPos = cursorRow = 0;
-        currentFormItem = sf::Sprite();
-        SetSelectedFormIndex(-1);
+        
     }
     // This is also where beastout card would be removed from queue
     // when beastout is available

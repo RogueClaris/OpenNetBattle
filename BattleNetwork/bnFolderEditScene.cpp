@@ -211,7 +211,7 @@ FolderEditScene::FolderEditScene(swoosh::ActivityController &controller, CardFol
 
   cardIcon = sf::Sprite();
   cardIcon.setTextureRect(sf::IntRect(0, 0, 14, 14));
-  cardIcon.setScale(1.f, 1.f);
+  cardIcon.setScale(2.f, 2.f);
 
   cardRevealTimer.start();
   easeInTimer.start();
@@ -362,9 +362,18 @@ void FolderEditScene::onUpdate(double elapsed) {
       if (currViewMode == ViewMode::folder) {
         if (folderView.swapCardIndex != -1) {
           if (folderView.swapCardIndex == folderView.currCardIndex) {
-            // Unselect the card
-            folderView.swapCardIndex = -1;
-            Audio().Play(AudioType::CHIP_CANCEL);
+              for (auto i = 0; i < poolCardBuckets.size(); i++) {
+                  if (poolCardBuckets[i].ViewCard() == folderCardSlots[folderView.currCardIndex].ViewCard()) {
+                      poolCardBuckets[i].AddCard();
+                      Battle::Card copy;
+                      bool gotCard = true;
+                      folderCardSlots[folderView.currCardIndex].GetCard(copy);
+                      break;
+                  };
+              }
+              // Unselect the card
+              folderView.swapCardIndex = -1;
+              Audio().Play(AudioType::CHIP_CANCEL);
 
           }
           else {
@@ -437,9 +446,29 @@ void FolderEditScene::onUpdate(double elapsed) {
       else if (currViewMode == ViewMode::pool) {
         if (packView.swapCardIndex != -1) {
           if (packView.swapCardIndex == packView.currCardIndex) {
-            // Unselect the card
-            packView.swapCardIndex = -1;
-            Audio().Play(AudioType::CHIP_CANCEL);
+              if (folder.GetSize() < 30) {
+                int found = -1;
+                for (auto i = 0; i < 30; i++){
+                    if (found == -1 && folderCardSlots[i].IsEmpty() == true) {
+                        found = i;
+                    }
+                }
+                Battle::Card copy;
+                if (found != -1 && poolCardBuckets[packView.currCardIndex].GetCard(copy)) {
+                    folderCardSlots[found].AddCard(copy);
+                    bool gotCard = true;
+                    packView.swapCardIndex = -1;
+                    folderView.swapCardIndex = -1;
+                    hasFolderChanged = true;
+                    Audio().Play(AudioType::CHIP_CONFIRM);
+                }
+              }
+              else {
+                  // Unselect the card
+                  packView.swapCardIndex = -1;
+                  Audio().Play(AudioType::CHIP_CANCEL);
+              }
+              
 
           }
           else {
@@ -743,7 +772,7 @@ void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
           cardLabel.SetColor(sf::Color::White);
           cardLabel.SetString(std::to_string(copy.GetDamage()));
           cardLabel.setOrigin(cardLabel.GetLocalBounds().width + cardLabel.GetLocalBounds().left, 0);
-          cardLabel.setPosition(2.f*80.f, 152.f);
+          cardLabel.setPosition(2.f*80.f, 142.f);
 
           surface.draw(cardLabel);
         }
