@@ -419,8 +419,11 @@ bool CardSelectionCust::CursorCancel() {
 
   if (newSelectCount == 0) {
     newHand = false;
-    Logger::Logf("%d", GetSelectedFormIndex());
     if (GetSelectedFormIndex() != -1) {
+        selectedFormRow = -1;
+        formCursorRow = 0;
+        cursorPos = cursorRow = 0;
+        currentFormItem = sf::Sprite();
         SetSelectedFormIndex(-1);
     }
     // This is also where beastout card would be removed from queue
