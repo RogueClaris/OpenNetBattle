@@ -216,8 +216,12 @@ FolderEditScene::FolderEditScene(swoosh::ActivityController& controller, CardFol
 =======
   cardIcon = sf::Sprite();
   cardIcon.setTextureRect(sf::IntRect(0, 0, 14, 14));
+<<<<<<< HEAD
   cardIcon.setScale(1.f, 1.f);
 >>>>>>> 71b496d9 (Backing up changes; working on cross canceling.)
+=======
+  cardIcon.setScale(2.f, 2.f);
+>>>>>>> 50425d6e (Adjusting card selection. Added form cancelling properly this time.)
 
     cardRevealTimer.start();
     easeInTimer.start();
@@ -326,11 +330,49 @@ void FolderEditScene::onUpdate(double elapsed) {
 
             selectInputCooldown -= elapsed;
 
+<<<<<<< HEAD
             if (selectInputCooldown <= 0) {
                 selectInputCooldown = maxSelectInputCooldown;
                 view->currCardIndex -= view->maxCardsOnScreen;
 
                 view->currCardIndex = std::max(view->currCardIndex, 0);
+=======
+    if (Input().Has(InputEvents::pressed_confirm)) {
+      if (currViewMode == ViewMode::folder) {
+        if (folderView.swapCardIndex != -1) {
+          if (folderView.swapCardIndex == folderView.currCardIndex) {
+              for (auto i = 0; i < poolCardBuckets.size(); i++) {
+                  if (poolCardBuckets[i].ViewCard() == folderCardSlots[folderView.currCardIndex].ViewCard()) {
+                      poolCardBuckets[i].AddCard();
+                      Battle::Card copy;
+                      bool gotCard = true;
+                      folderCardSlots[folderView.currCardIndex].GetCard(copy);
+                      break;
+                  };
+              }
+              // Unselect the card
+              folderView.swapCardIndex = -1;
+              Audio().Play(AudioType::CHIP_CANCEL);
+
+          }
+          else {
+            // swap the card
+            auto temp = folderCardSlots[folderView.swapCardIndex];
+            folderCardSlots[folderView.swapCardIndex] = folderCardSlots[folderView.currCardIndex];
+            folderCardSlots[folderView.currCardIndex] = temp;
+            Audio().Play(AudioType::CHIP_CONFIRM);
+
+            folderView.swapCardIndex = -1;
+          }
+        }
+        else {
+          // See if we're swapping from a pack
+          if (packView.swapCardIndex != -1) {
+            // Try to swap the card with the one from the pack
+            // The card from the pack is copied and added to the slot
+            // The slot card needs to find its corresponding bucket and increment it
+            Battle::Card copy;
+>>>>>>> 50425d6e (Adjusting card selection. Added form cancelling properly this time.)
 
                 Audio().Play(AudioType::CHIP_SELECT);
 
@@ -554,6 +596,7 @@ void FolderEditScene::onUpdate(double elapsed) {
                 }
             }
         }
+<<<<<<< HEAD
         else if (Input().Has(InputEvents::pressed_ui_right) && currViewMode == ViewMode::folder) {
             currViewMode = ViewMode::pool;
             canInteract = false;
@@ -563,6 +606,46 @@ void FolderEditScene::onUpdate(double elapsed) {
             currViewMode = ViewMode::folder;
             canInteract = false;
             Audio().Play(AudioType::CHIP_DESC);
+=======
+      }
+      else if (currViewMode == ViewMode::pool) {
+        if (packView.swapCardIndex != -1) {
+          if (packView.swapCardIndex == packView.currCardIndex) {
+              if (folder.GetSize() < 30) {
+                int found = -1;
+                for (auto i = 0; i < 30; i++){
+                    if (found == -1 && folderCardSlots[i].IsEmpty() == true) {
+                        found = i;
+                    }
+                }
+                Battle::Card copy;
+                if (found != -1 && poolCardBuckets[packView.currCardIndex].GetCard(copy)) {
+                    folderCardSlots[found].AddCard(copy);
+                    bool gotCard = true;
+                    packView.swapCardIndex = -1;
+                    folderView.swapCardIndex = -1;
+                    hasFolderChanged = true;
+                    Audio().Play(AudioType::CHIP_CONFIRM);
+                }
+              }
+              else {
+                  // Unselect the card
+                  packView.swapCardIndex = -1;
+                  Audio().Play(AudioType::CHIP_CANCEL);
+              }
+              
+
+          }
+          else {
+            // swap the pack
+            auto temp = poolCardBuckets[packView.swapCardIndex];
+            poolCardBuckets[packView.swapCardIndex] = poolCardBuckets[packView.currCardIndex];
+            poolCardBuckets[packView.currCardIndex] = temp;
+            Audio().Play(AudioType::CHIP_CONFIRM);
+
+            packView.swapCardIndex = -1;
+          }
+>>>>>>> 50425d6e (Adjusting card selection. Added form cancelling properly this time.)
         }
 
         view->currCardIndex = std::max(0, view->currCardIndex);
@@ -866,8 +949,12 @@ void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
           cardLabel.SetColor(sf::Color::White);
           cardLabel.SetString(std::to_string(copy.GetDamage()));
           cardLabel.setOrigin(cardLabel.GetLocalBounds().width + cardLabel.GetLocalBounds().left, 0);
+<<<<<<< HEAD
           cardLabel.setPosition(2.f*80.f, 152.f);
 >>>>>>> c88ccfe8 (Backing up changes.)
+=======
+          cardLabel.setPosition(2.f*80.f, 142.f);
+>>>>>>> 50425d6e (Adjusting card selection. Added form cancelling properly this time.)
 
                 int offset = (int)(copy.GetElement());
                 element.setTextureRect(sf::IntRect(14 * offset, 0, 14, 14));

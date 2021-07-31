@@ -362,6 +362,7 @@ void FolderScene::onUpdate(double elapsed) {
           if (collection.GetFolder(currFolderIndex, folder) && !folder->HasErrors()) {
             selectedFolderIndex = currFolderIndex;
             collection.SwapOrder(0, selectedFolderIndex);
+            folder->equipped = true;
 
             // Save this session data
             auto folderStr = collection.GetFolderNames()[0];

@@ -467,7 +467,7 @@ namespace BuiltInCards {
           },
           { "Sword A", Battle::Card{{
                   "", //uuid unused
-                  140,  // damage
+                  80,  // damage
                   0,  // limit
                   'A', // code
                   true, /*!< Can this card be boosted by other cards? */
@@ -481,6 +481,57 @@ namespace BuiltInCards {
                   Battle::CardClass::standard, //rank e.g. standard, mega, giga
                   {} /*!< Cards can be tagged with additional user information*/
                   }}
-          }
+          },
+            { "Sword L", Battle::Card{{
+              "", //uuid unused
+              80,  // damage
+              0,  // limit
+              'L', // code
+              true, /*!< Can this card be boosted by other cards? */
+              false, /*!< time freeze */
+              "Sword", // should be the same as the map entry 
+              "PLAYER_SWING", // action state name for animation
+              "Slash 1sq ahead!", // battle scene hint text
+              "Take out a small sword and slash directly ahead!", // detailed library scene hint text
+              Element::sword, // primary element
+              Element::none, // secondary element (hidden)
+              Battle::CardClass::standard, //rank e.g. standard, mega, giga
+              {} /*!< Cards can be tagged with additional user information*/
+              }}
+            },
+            { "Sword S", Battle::Card{{
+              "", //uuid unused
+              80,  // damage
+              0,  // limit
+              'S', // code
+              true, /*!< Can this card be boosted by other cards? */
+              false, /*!< time freeze */
+              "Sword", // should be the same as the map entry 
+              "PLAYER_SWING", // action state name for animation
+              "Slash 1sq ahead!", // battle scene hint text
+              "Take out a small sword and slash directly ahead!", // detailed library scene hint text
+              Element::sword, // primary element
+              Element::none, // secondary element (hidden)
+              Battle::CardClass::standard, //rank e.g. standard, mega, giga
+              {} /*!< Cards can be tagged with additional user information*/
+              }}
+            },
+        { "Sword Y", Battle::Card{{
+          "", //uuid unused
+          80,  // damage
+          0,  // limit
+          'Y', // code
+          true, /*!< Can this card be boosted by other cards? */
+          false, /*!< time freeze */
+          "Sword", // should be the same as the map entry 
+          "PLAYER_SWING", // action state name for animation
+          "Slash 1sq ahead!", // battle scene hint text
+          "Take out a small sword and slash directly ahead!", // detailed library scene hint text
+          Element::sword, // primary element
+          Element::none, // secondary element (hidden)
+          Battle::CardClass::standard, //rank e.g. standard, mega, giga
+          {} /*!< Cards can be tagged with additional user information*/
+          }}
+        },
   };
 }

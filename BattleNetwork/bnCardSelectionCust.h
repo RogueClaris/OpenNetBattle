@@ -59,6 +59,7 @@ private:
   mutable sf::Sprite cardLock;
   mutable sf::Sprite formItemBG;
   mutable sf::Sprite currentFormItem;
+  mutable sf::Sprite previousFormItem;
   mutable sf::Sprite lockedInFormItem;
   mutable sf::Sprite previousFormItem;
   Animation cursorSmallAnimator;
@@ -86,6 +87,7 @@ private:
   int lockedInFormIndex; //!< What the card cust has locked our selection in as
   int cardCount; /*!< How many cards are listed in the GUI */
   int selectCount, newSelectCount; /*!< How many cards the user has selected */
+  int previousFormIndex = -1; //An index to track previous form. For cancelling form changes.
   mutable int cursorPos; /*!< Colum of the cursor */
   mutable int cursorRow; /*!< Row of the cursor */
   bool areCardsReady; /*!< If cards have been OKd by user */
