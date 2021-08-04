@@ -70,9 +70,6 @@ void Metrid::OnSpawn(Battle::Tile& start)
 }
 
 void Metrid::OnUpdate(double _elapsed) {
-  setPosition(tile->getPosition().x, tile->getPosition().y);
-  setPosition(getPosition() + tileOffset);
-
   AI<Metrid>::Update(_elapsed);
 }
 

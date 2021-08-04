@@ -407,7 +407,7 @@ void Overworld::Homepage::OnTileCollision()
     auto warpPos = sf::Vector3f(warpBasic.x, warpBasic.y, warpTile->get().customProperties.GetPropertyFloat("z"));
     Direction warpDirection = FromString(warpTile->get().customProperties.GetProperty("direction"));
     auto teleportToCyberworld = [=] {
-      getController().push<segue<BlackWashFade>::to<Overworld::GameArea>>(warpMap, warpPos, warpDirection);
+      getController().push<segue<BlackWashFade>::to<Overworld::GameArea>>(warpMap, warpPos, warpDirection, false);
     };
 
     this->TeleportUponReturn(returnPoint);

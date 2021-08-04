@@ -11,7 +11,6 @@
 #include "../bnGameOverScene.h"
 #include "../bnCardFolderCollection.h"
 #include "../bnBuiltInProgramAdvances.h"
-#include <stdlib.h>
 
 using namespace swoosh::types;
 
@@ -40,13 +39,6 @@ Overworld::GameArea::GameArea(
     }
     else {
         auto sesh = GetPlayerSession();
-        auto& map = sesh->area;
-        if (map.areaMap == nullptr) {
-            LoadMap(FileUtil::Read(map.filePath));
-        }
-        else {
-            map.areaMap;
-        }
     }
     
 }
@@ -84,53 +76,53 @@ void Overworld::GameArea::onUpdate(double elapsed)
           });
   }
   else {
-      if (GetTeleportController().IsComplete() && map.isEncounter) {
-          if (player->getMoveState() != Overworld::Actor::MovementState::idle) {
-              if (player->getDistance(player->lastPos, player->getPosition()) > 0) {
-                  map.updateBattleSteps();
-                  if (map.CurrentBattleSteps >= map.BattleSteps) {
-                      srand((unsigned)GetTickCount64());
-                      map.nextBattleIndex = std::floor(rand() % map.nextBattleList.size());
-                      std::string checkMob = map.nextBattleList.at(map.nextBattleIndex);
-                      Mob* mob = MobRegistration::GetInstance().Find(checkMob).GetMob();
-                      Audio().Play(AudioType::PRE_BATTLE, AudioPriority::high);
-                      Audio().StopStream();
-                      auto& meta = NAVIS.At(GetCurrentNavi());
-                      const std::string& image = meta.GetMugshotTexturePath();
-                      const std::string& mugshotAnim = meta.GetMugshotAnimationPath();
-                      const std::string& emotionsTexture = meta.GetEmotionsTexturePath();
-                      auto mugshot = Textures().LoadTextureFromFile(image);
-                      auto emotions = Textures().LoadTextureFromFile(emotionsTexture);
-                      Player* player = meta.GetNavi();
-                      if (!mob->GetBackground()) {
-                          mob->SetBackground(GetBackground());
-                      }
-                      PA& PhotonArt = GetProgramAdvance();
-                      auto folder = *GetSelectedFolder();
-                      if (folder) {
-                          folder = folder->Clone();
-                          folder->Shuffle();
-                      }
-                      MobBattleProperties props{
-                            { *player, PhotonArt, folder, mob->GetField(), mob->GetBackground() },
-                            MobBattleProperties::RewardBehavior::take,
-                            { mob },
-                            sf::Sprite(*mugshot),
-                            mugshotAnim,
-                            emotions,
-                      };
-                      using effect = segue<WhiteWashFade>;
-                      auto handleBattleResult = [this](const BattleResults& results) {
-                          GetPlayerSession()->health = results.playerHealth; //BN2+ HP retention; remove for BN1 HP restoration.
-                      };
-                      getController().push<effect::to<MobBattleScene>>(props, handleBattleResult);
-                      GetPlayerController().ListenToInputEvents(false);
-                      goToBattle = true;
+      if (GetTeleportController().IsComplete() && !map.isEncounter) {
+          Logger::Log("hello 1");
+          if (player->getDistance(player->lastPos, player->getPosition()) > 0) {
+              Logger::Log("hello 2");
+              map.updateBattleSteps();
+              if (map.CurrentBattleSteps >= map.BattleSteps) {
+                  Logger::Log("hello 3");
+                  map.nextBattleIndex = std::floor(rand() % map.nextBattleList.size());
+                  std::string checkMob = map.nextBattleList.at(map.nextBattleIndex);
+                  Mob* mob = MobRegistration::GetInstance().Find(checkMob).GetMob();
+                  Audio().Play(AudioType::PRE_BATTLE, AudioPriority::high);
+                  Audio().StopStream();
+                  auto& meta = NAVIS.At(GetCurrentNavi());
+                  const std::string& image = meta.GetMugshotTexturePath();
+                  const std::string& mugshotAnim = meta.GetMugshotAnimationPath();
+                  const std::string& emotionsTexture = meta.GetEmotionsTexturePath();
+                  auto mugshot = Textures().LoadTextureFromFile(image);
+                  auto emotions = Textures().LoadTextureFromFile(emotionsTexture);
+                  Player* player = meta.GetNavi();
+                  if (!mob->GetBackground()) {
+                      mob->SetBackground(GetBackground());
                   }
+                  PA& PhotonArt = GetProgramAdvance();
+                  auto folder = *GetSelectedFolder();
+                  if (folder) {
+                      folder = folder->Clone();
+                      folder->Shuffle();
+                  }
+                  MobBattleProperties props{
+                      { *player, PhotonArt, folder, mob->GetField(), mob->GetBackground() },
+                      MobBattleProperties::RewardBehavior::take,
+                      { mob },
+                      sf::Sprite(*mugshot),
+                      mugshotAnim,
+                      emotions,
+                  };
+                  using effect = segue<WhiteWashFade>;
+                  auto handleBattleResult = [this](const BattleResults& results) {
+                      GetPlayerSession()->health = results.playerHealth; //BN2+ HP retention; remove for BN1 HP restoration.
+                  };
+                  getController().push<effect::to<MobBattleScene>>(props, handleBattleResult);
+                  GetPlayerController().ListenToInputEvents(false);
+                  goToBattle = true;
               }
           }
-          player->lastPos = player->getPosition();
       }
+      player->lastPos = player->getPosition();
   }
 }
 
@@ -155,7 +147,6 @@ void Overworld::GameArea::onResume()
   infocus = true;
   goToBattle = false;
   auto& map = GetMap();
-  srand(unsigned(GetTickCount64()));
   map.CurrentBattleSteps = 0;
   map.BattleSteps = rand() % map.MaxBattleSteps;
   if (map.BattleSteps < map.BaseBattleSteps) {

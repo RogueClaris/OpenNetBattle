@@ -28,15 +28,15 @@ namespace Overworld {
     GameArea(swoosh::ActivityController&, const std::string& mapPath, sf::Vector3f entryPos, const Direction mapDirection, bool isLoad);
     ~GameArea();
 
-    void onUpdate(double elapsed) override;
-    void onDraw(sf::RenderTexture& surface) override;
-    void onStart() override;
-    void onEnd() override;
-    void onResume() override;
-    void onLeave() override;
+    void onUpdate(double elapsed);
+    void onDraw(sf::RenderTexture& surface);
+    void onStart();
+    void onEnd();
+    void onResume();
+    void onLeave();
 
-    void OnTileCollision() override;
-    void OnInteract(Interaction type) override;
+    void OnTileCollision();
+    void OnInteract(Interaction type);
     void detectConveyor();
   };
 }

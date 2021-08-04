@@ -43,155 +43,155 @@
 using swoosh::ActivityController;
 
 enum class Endianness : short {
-  big = 0,
-  little
+    big = 0,
+    little
 };
 
 class Game final : public ActivityController {
 private:
-  unsigned int randSeed{};
-  double mouseAlpha{};
-  bool showScreenBars{};
-  bool frameByFrame{}, isDebug{};
-  TextureResourceManager textureManager;
-  AudioResourceManager audioManager;
-  ShaderResourceManager shaderManager;
+    unsigned int randSeed{};
+    double mouseAlpha{};
+    bool showScreenBars{};
+    bool frameByFrame{}, isDebug{};
+    TextureResourceManager textureManager;
+    AudioResourceManager audioManager;
+    ShaderResourceManager shaderManager;
 #ifdef BN_MOD_SUPPORT 
-  ScriptResourceManager scriptManager; 
+    ScriptResourceManager scriptManager;
 #endif
-  InputManager inputManager;
-  NetManager netManager;
+    InputManager inputManager;
+    NetManager netManager;
 
-  DrawWindow& window;
-  ConfigReader reader;
-  ConfigSettings configSettings;
+    DrawWindow& window;
+    ConfigReader reader;
+    ConfigSettings configSettings;
 
-  // mouse stuff
-  SpriteProxyNode mouse;
-  sf::Vector2f lastMousepos;
-  Animation mouseAnimation;
+    // mouse stuff
+    SpriteProxyNode mouse;
+    sf::Vector2f lastMousepos;
+    Animation mouseAnimation;
 
-  // loading spinner
-  SpriteProxyNode spinner;
-  Animation spinnerAnimator;
+    // loading spinner
+    SpriteProxyNode spinner;
+    Animation spinnerAnimator;
 
-  sf::Shader* postprocess{ nullptr };
+    sf::Shader* postprocess{ nullptr };
 
-  std::vector<cxxopts::KeyValue> commandline; /*!< Values parsed from the command line*/
+    std::vector<cxxopts::KeyValue> commandline; /*!< Values parsed from the command line*/
 
-  // We need a render surface to draw to so Swoosh ActivityController
-  // can add screen transition effects from the title screen
-  sf::RenderTexture renderSurface;
+    // We need a render surface to draw to so Swoosh ActivityController
+    // can add screen transition effects from the title screen
+    sf::RenderTexture renderSurface;
 
-  // total elapsed frame time
-  frame_time_t elapsed{};
+    // total elapsed frame time
+    frame_time_t elapsed{};
 
-  Endianness endian{ Endianness::big };
-  std::atomic<int> progress{ 0 };
+    Endianness endian{ Endianness::big };
+    std::atomic<int> progress{ 0 };
 
 public:
-  Game(DrawWindow& window);
-  Game(const Game&) = delete;
-  ~Game();
+    Game(DrawWindow& window);
+    Game(const Game&) = delete;
+    ~Game();
 
-  /**
-   * @brief Load all resources required by game
-   * @param values command-line values as ParseResult object from cxxopts lib
-   */
-  TaskGroup Boot(const cxxopts::ParseResult& values);
+    /**
+     * @brief Load all resources required by game
+     * @param values command-line values as ParseResult object from cxxopts lib
+     */
+    TaskGroup Boot(const cxxopts::ParseResult& values);
 
-  void Run();
-  void SetWindowMode(DrawWindow::WindowMode mode);
-  void Postprocess(ShaderType shaderType);
-  void NoPostprocess();
-  const sf::Vector2f CameraViewOffset(Camera& camera);
-  unsigned FrameNumber() const;
-  const Endianness GetEndianness();
-  void UpdateConfigSettings(const ConfigSettings& new_settings);
-  void SeedRand(unsigned int seed);
-  const unsigned int GetRandSeed() const;
+    void Run();
+    void SetWindowMode(DrawWindow::WindowMode mode);
+    void Postprocess(ShaderType shaderType);
+    void NoPostprocess();
+    const sf::Vector2f CameraViewOffset(Camera& camera);
+    unsigned FrameNumber() const;
+    const Endianness GetEndianness();
+    void UpdateConfigSettings(const ConfigSettings& new_settings);
+    void SeedRand(unsigned int seed);
+    const unsigned int GetRandSeed() const;
 
-  /**
-   * @brief Store parsed command line values into the engine for easy access
-   * @param values ParseResult object from cxxopts lib
-   */
-  void SetCommandLineValues(const cxxopts::ParseResult& values);
+    /**
+     * @brief Store parsed command line values into the engine for easy access
+     * @param values ParseResult object from cxxopts lib
+     */
+    void SetCommandLineValues(const cxxopts::ParseResult& values);
 
-  /**
-   * @brief Returns a value from the command line as type T
-   * @param key String key for the command line arg
-   * @return value for key as type T. If none are found T{} is returned.
-   */
-  template<typename T>
-  const T CommandLineValue(const std::string& key) {
-    for (auto&& keyval : commandline) {
-      if (keyval.key() == key) {
-        return keyval.as<T>();
-      }
+    /**
+     * @brief Returns a value from the command line as type T
+     * @param key String key for the command line arg
+     * @return value for key as type T. If none are found T{} is returned.
+     */
+    template<typename T>
+    const T CommandLineValue(const std::string& key) {
+        for (auto&& keyval : commandline) {
+            if (keyval.key() == key) {
+                return keyval.as<T>();
+            }
+        }
+
+        return T{};
     }
-
-    return T{};
-  }
 private:
-  DrawWindow::WindowMode windowMode{};
+    DrawWindow::WindowMode windowMode{};
 
-  void LoadConfigSettings();
+    void LoadConfigSettings();
 
-  /*! \brief This thread initializes all navis
-  *
-  * Uses an std::atomic<int> pointer
-  * to keep track of all successfully loaded
-  * objects.
-  *
-  * After the media resources are loaded we
-  * safely load all registered navis.
-  * Loaded navis will show up in navi select
-  * screen and can be chosen to play as in
-  * battle.
-  */
-  void RunNaviInit(std::atomic<int>* progress);
+    /*! \brief This thread initializes all navis
+    *
+    * Uses an std::atomic<int> pointer
+    * to keep track of all successfully loaded
+    * objects.
+    *
+    * After the media resources are loaded we
+    * safely load all registered navis.
+    * Loaded navis will show up in navi select
+    * screen and can be chosen to play as in
+    * battle.
+    */
+    void RunNaviInit(std::atomic<int>* progress);
 
-  /*! \brief This thread tnitializes all mobs
-  *
-  * @see RunNaviInit()
-  *
-  * After the media resources are loaded we
-  * safely load all registed mobs.
-  * Loaded mobs will show up in mob select
-  * screen and can be chosen to battle
-  * against.
-  */
-  void RunMobInit(std::atomic<int>* progress);
+    /*! \brief This thread tnitializes all mobs
+    *
+    * @see RunNaviInit()
+    *
+    * After the media resources are loaded we
+    * safely load all registed mobs.
+    * Loaded mobs will show up in mob select
+    * screen and can be chosen to battle
+    * against.
+    */
+    void RunMobInit(std::atomic<int>* progress);
 
-  /*! \brief This thread loads textures and shaders
-  *
-  * Uses and std::atomic<int> pointer to keep
-  * count of successfully loaded objects
-  */
-  void RunGraphicsInit(std::atomic<int> * progress);
+    /*! \brief This thread loads textures and shaders
+    *
+    * Uses and std::atomic<int> pointer to keep
+    * count of successfully loaded objects
+    */
+    void RunGraphicsInit(std::atomic<int>* progress);
 
-  /*! \brief This thread loads sound effects
-  *
-  * Uses and std::atomic<int> pointer to keep
-  * count of successfully loaded objects
-  */
-  void RunAudioInit(std::atomic<int> * progress);
+    /*! \brief This thread loads sound effects
+    *
+    * Uses and std::atomic<int> pointer to keep
+    * count of successfully loaded objects
+    */
+    void RunAudioInit(std::atomic<int>* progress);
 
-  /*! \brief This function describes how the app behaves on focus regain
-  *
-  * Refresh the graphics context and enable Audio() again
-  */
-  void GainFocus();
+    /*! \brief This function describes how the app behaves on focus regain
+    *
+    * Refresh the graphics context and enable Audio() again
+    */
+    void GainFocus();
 
-  /*! \brief This function describes how the app behaves on focus lost
-  *
-  * Mute the Audio()
-  */
-  void LoseFocus();
+    /*! \brief This function describes how the app behaves on focus lost
+    *
+    * Mute the Audio()
+    */
+    void LoseFocus();
 
-  /*! \brief This function describes how the app behaves on window resize
-  *
-  * Refresh the viewport
-  */
-  void Resize(int newWidth, int newHeight);
+    /*! \brief This function describes how the app behaves on window resize
+    *
+    * Refresh the viewport
+    */
+    void Resize(int newWidth, int newHeight);
 };

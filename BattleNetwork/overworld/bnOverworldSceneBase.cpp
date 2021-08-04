@@ -9,13 +9,11 @@
 
 #include "bnOverworldSceneBase.h"
 #include "bnOverworldTiledMapLoader.h"
-#include "bnOverworldPlayerSessionWriter.h"
 
 #include "../bnWebClientMananger.h"
 #include "../Android/bnTouchArea.h"
 #include "../bnCurrentTime.h"
 
-#include "../bnBuiltInProgramAdvances.h"
 #include "../bnFolderScene.h"
 #include "../bnSelectNaviScene.h"
 #include "../bnSelectMobScene.h"
@@ -57,7 +55,7 @@ namespace {
           { "mail",        std::bind(&Overworld::SceneBase::GotoMail, scene) },
           { "key_items",   std::bind(&Overworld::SceneBase::GotoKeyItems, scene) },
           //{ "mob_select",  std::bind(&Overworld::SceneBase::GotoMobSelect, scene) },
-          { "config",      std::bind(&Overworld::SceneBase::GotoConfig, scene) },
+          { "config",      std::bind(&Overworld::SceneBase::GotoConfig, scene) }
           //{ "sync",        std::bind(&Overworld::SceneBase::GotoPVP, scene) }
         };
     };
@@ -66,89 +64,26 @@ namespace {
 Overworld::SceneBase::SceneBase(swoosh::ActivityController& controller) :
     lastIsConnectedState(false),
     playerSession(std::make_shared<PlayerSession>()),
-    personalMenu(playerSession, "Overworld", ::MakeOptions(this)),
+    personalMenu(std::make_shared<PersonalMenu>(playerSession, "Overworld", ::MakeOptions(this))),
+    minimap(std::make_shared<Minimap>()),
     camera(controller.getWindow().getView()),
     Scene(controller),
     map(0, 0, 0, 0),
-    time(Font::Style::thick),
     playerActor(std::make_shared<Overworld::Actor>("You"))
 {
-<<<<<<< HEAD
+
     // Draws the scrolling background
     SetBackground(std::make_shared<LanBackground>());
-=======
-  // When we reach the menu scene we need to load the player information
-  // before proceeding to next sub menus
-  webAccountIcon.setTexture(LOAD_TEXTURE(WEBACCOUNT_STATUS));
-  webAccountIcon.setScale(2.f, 2.f);
-  webAccountIcon.setPosition(4, getController().getVirtualWindowSize().y - 44.0f);
-  webAccountAnimator = Animation("resources/ui/webaccount_icon.animation");
-  webAccountAnimator.Load();
-  webAccountAnimator.SetAnimation("NO_CONNECTION");
-
-  // Draws the scrolling background
-  SetBackground(std::make_shared<LanBackground>());
-
-  // set the missing texture for all actor objects
-  auto missingTexture = Textures().LoadTextureFromFile("resources/ow/missing.png");
-  Overworld::Actor::SetMissingTexture(missingTexture);
-
-  personalMenu.setScale(2.f, 2.f);
-  //emote.setScale(2.f, 2.f);
-
-  gotoNextScene = true;
-
-  /// WEB ACCOUNT LOADING
-
-  WebAccounts::AccountState account;
-
-  if (WEBCLIENT.IsLoggedIn()) {
-    bool loaded = WEBCLIENT.LoadSession("profile.bin", &account);
-
-    // Quickly load the session on disk to reduce wait times
-    if (loaded) {
-      Logger::Log("Found cached account data");
-
-      WEBCLIENT.UseCachedAccount(account);
-      WEBCLIENT.CacheTextureData(account);
-      folders = CardFolderCollection::ReadFromWebAccount(account);
-      programAdvance = PA::ReadFromWebAccount(account);
-
-      NaviEquipSelectedFolder();
-    }
-
-    Logger::Log("Fetching account data...");
-
-    // resent fetch command to get the a latest account info
-    accountCommandResponse = WEBCLIENT.SendFetchAccountCommand();
-
-    Logger::Log("waiting for server...");
-  }
-  else {
-
-    // If we are not actively online but we have a profile on disk, try to load our previous session
-    // The user may be logging in but has not completed yet and we want to reduce wait times...
-    // Otherwise, use the guest profile
-    bool loaded = WEBCLIENT.LoadSession("profile.bin", &account) || WEBCLIENT.LoadSession("guest.bin", &account);
->>>>>>> development
 
     // set the missing texture for all actor objects
     auto missingTexture = Textures().LoadTextureFromFile("resources/ow/missing.png");
     Overworld::Actor::SetMissingTexture(missingTexture);
 
-    personalMenu.setScale(2.f, 2.f);
+    personalMenu->setScale(2.f, 2.f);
 
-<<<<<<< HEAD
     gotoNextScene = true;
 
     setView(sf::Vector2u(480, 320));
-=======
-  setView(sf::Vector2u(480, 320));
-
-  // Spawn overworld player
-  playerActor->setPosition(200, 20);
-  playerActor->SetCollisionRadius(4);
->>>>>>> development
 
     // Spawn overworld player
     playerActor->setPosition(200, 20);
@@ -157,17 +92,10 @@ Overworld::SceneBase::SceneBase(swoosh::ActivityController& controller) :
     AddActor(playerActor);
     AddSprite(teleportController.GetBeam());
 
-<<<<<<< HEAD
     map.setScale(2.f, 2.f);
 
-    // clock
-    time.setPosition(480 - 4.f, 6.f);
-    time.setScale(2.f, 2.f);
-=======
-  // clock
-  time.setPosition(480 - 4.f, 6.f);
-  time.setScale(2.f, 2.f);
->>>>>>> development
+    menuSystem.BindMenu(InputEvents::pressed_pause, personalMenu);
+    menuSystem.BindMenu(InputEvents::pressed_map, minimap);
 }
 
 void Overworld::SceneBase::onStart() {
@@ -227,7 +155,7 @@ void Overworld::SceneBase::onUpdate(double elapsed) {
         // update minimap
         auto playerTilePos = map.WorldToTileSpace(playerActor->getPosition());
         bool isConcealed = map.IsConcealed(sf::Vector2i(playerTilePos), playerActor->GetLayer());
-        minimap.SetPlayerPosition(screenPos, isConcealed);
+        minimap->SetPlayerPosition(screenPos, isConcealed);
     }
 
     for (auto& actor : actors) {
@@ -239,9 +167,22 @@ void Overworld::SceneBase::onUpdate(double elapsed) {
         return; // keep the screen looking the same when we come back
 #endif
 
-    programAdvance = PA();
-    for (const auto& [key, value] : BuiltInProgramAdvances::advanceList) {
-        programAdvance.RegisterPA(value);
+    if (WEBCLIENT.IsLoggedIn() && accountCommandResponse.valid() && is_ready(accountCommandResponse)) {
+        try {
+            webAccount = accountCommandResponse.get();
+            Logger::Logf("You have %i folders on your account", webAccount.folders.size());
+            WEBCLIENT.CacheTextureData(webAccount);
+            folders = CardFolderCollection::ReadFromWebAccount(webAccount);
+            programAdvance = PA::ReadFromWebAccount(webAccount);
+
+            NaviEquipSelectedFolder();
+
+            // Replace
+            WEBCLIENT.SaveSession("profile.bin");
+        }
+        catch (const std::runtime_error& e) {
+            Logger::Logf("Could not fetch account.\nError: %s", e.what());
+        }
     }
 
     // update the web connectivity icon
@@ -292,19 +233,11 @@ void Overworld::SceneBase::onUpdate(double elapsed) {
             });
     }
 
-<<<<<<< HEAD
     // Loop the bg
     bg->Update((float)elapsed);
 
-    // Update the widget
-    personalMenu.Update((float)elapsed);
-
     // Update the textbox
     menuSystem.Update((float)elapsed);
-=======
-  // Update the textbox
-  menuSystem.Update((float)elapsed);
->>>>>>> development
 
     HandleCamera((float)elapsed);
 
@@ -337,50 +270,16 @@ void Overworld::SceneBase::HandleCamera(float elapsed) {
 }
 
 void Overworld::SceneBase::HandleInput() {
-    if (showMinimap) {
-        sf::Vector2f panning = {};
+    auto& window = getController().getWindow();
+    auto mousei = sf::Mouse::getPosition(window);
+    auto mousef = window.mapPixelToCoords(mousei);
 
-        if (Input().Has(InputEvents::held_ui_left)) {
-            panning.x -= 1.f;
-        }
-
-        if (Input().Has(InputEvents::held_ui_right)) {
-            panning.x += 1.f;
-        }
-
-        if (Input().Has(InputEvents::held_ui_up)) {
-            panning.y -= 1.f;
-        }
-
-        if (Input().Has(InputEvents::held_ui_down)) {
-            panning.y += 1.f;
-        }
-
-        if (Input().GetConfigSettings().GetInvertMinimap()) {
-            panning.x *= -1.f;
-            panning.y *= -1.f;
-        }
-
-        if (Input().Has(InputEvents::pressed_map)) {
-            showMinimap = false;
-            minimap.ResetPanning();
-        }
-
-        minimap.Pan(panning);
-        return;
-    }
+    menuSystem.HandleInput(Input(), mousef);
 
     if (!menuSystem.IsClosed()) {
-        menuSystem.HandleInput(Input(), getController().getWindow());
         return;
     }
 
-    if (!personalMenu.IsClosed()) {
-        personalMenu.HandleInput(Input(), Audio());
-        return;
-    }
-
-<<<<<<< HEAD
     // check to see if talk button was pressed
     if (!IsInputLocked()) {
         if (Input().Has(InputEvents::pressed_interact)) {
@@ -390,44 +289,6 @@ void Overworld::SceneBase::HandleInput() {
             OnInteract(Interaction::inspect);
         }
     }
-
-    if (Input().Has(InputEvents::pressed_pause) && !Input().Has(InputEvents::pressed_cancel)) {
-        personalMenu.Open();
-        Audio().Play(AudioType::CHIP_DESC);
-=======
-  if (!menuSystem.IsClosed()) {
-    menuSystem.HandleInput(Input(), getController().getWindow());
-    return;
-  }
-
-  if (!personalMenu.IsClosed()) {
-    personalMenu.HandleInput(Input(), Audio());
-    return;
-  }
-
-  // check to see if talk button was pressed
-  if (!IsInputLocked()) {
-    if (Input().Has(InputEvents::pressed_interact)) {
-      OnInteract(Interaction::action);
->>>>>>> development
-    }
-    else if (Input().Has(InputEvents::pressed_map)) {
-        showMinimap = true;
-        minimap.ResetPanning();
-    }
-<<<<<<< HEAD
-=======
-  }
-
-  if (Input().Has(InputEvents::pressed_pause) && !Input().Has(InputEvents::pressed_cancel)) {
-    personalMenu.Open();
-    Audio().Play(AudioType::CHIP_DESC);
-  }
-  else if (Input().Has(InputEvents::pressed_map)) {
-    showMinimap = true;
-    minimap.ResetPanning();
-  }
->>>>>>> development
 }
 
 void Overworld::SceneBase::onLeave() {
@@ -490,11 +351,6 @@ void Overworld::SceneBase::onResume() {
 }
 
 void Overworld::SceneBase::onDraw(sf::RenderTexture& surface) {
-    if (showMinimap) {
-        surface.draw(minimap);
-        return;
-    }
-
     if (menuSystem.IsFullscreen()) {
         surface.draw(menuSystem);
         return;
@@ -506,16 +362,14 @@ void Overworld::SceneBase::onDraw(sf::RenderTexture& surface) {
 
     DrawWorld(surface, sf::RenderStates::Default);
 
-<<<<<<< HEAD
-    surface.draw(personalMenu);
-=======
-  surface.draw(personalMenu);
->>>>>>> development
+    if (personalMenu->IsClosed()) {
+        // menuSystem will not draw personal menu if it's closed
+        // might make sense to extract some parts of menu system as the closed UI has different requirements
+        personalMenu->draw(surface, sf::RenderStates::Default);
+    }
 
     // Add the web account connection symbol
     surface.draw(webAccountIcon);
-
-    PrintTime(surface);
 
     // This will mask everything before this line with camera fx
     surface.draw(camera.GetLens());
@@ -706,7 +560,6 @@ void Overworld::SceneBase::RefreshNaviSprite()
     // If coming back from navi select, the navi has changed, update it
     const auto& owPath = meta.GetOverworldAnimationPath();
 
-<<<<<<< HEAD
     if (owPath.size()) {
         if (auto tex = Textures().LoadTextureFromFile(meta.GetOverworldTexturePath())) {
             playerActor->setTexture(tex);
@@ -714,21 +567,12 @@ void Overworld::SceneBase::RefreshNaviSprite()
         playerActor->LoadAnimations(owPath);
 
         auto iconTexture = meta.GetIconTexture();
-=======
-  if (owPath.size()) {
-    if (auto tex = Textures().LoadTextureFromFile(meta.GetOverworldTexturePath())) {
-      playerActor->setTexture(tex);
-    }
-    playerActor->LoadAnimations(owPath);
-
-    auto iconTexture = meta.GetIconTexture();
->>>>>>> development
 
         if (iconTexture) {
-            personalMenu.UseIconTexture(iconTexture);
+            personalMenu->UseIconTexture(iconTexture);
         }
         else {
-            personalMenu.ResetIconTexture();
+            personalMenu->ResetIconTexture();
         }
     }
     else {
@@ -845,7 +689,7 @@ void Overworld::SceneBase::LoadMap(const std::string& data)
         Audio().Stream(GetPath(map.GetSongPath()), true);
     }
 
-    personalMenu.SetArea(map.GetName());
+    personalMenu->SetArea(map.GetName());
 
     // cleanup data from the previous map
     this->map.RemoveSprites(*this);
@@ -859,8 +703,8 @@ void Overworld::SceneBase::LoadMap(const std::string& data)
     // update map to trigger recalculating shadows for minimap
     this->map.Update(*this, 0.0f);
 
-    minimap = Minimap::CreateFrom(this->map.GetName(), this->map);
-    minimap.setScale(2.f, 2.f);
+    *minimap = Minimap::CreateFrom(this->map.GetName(), this->map);
+    minimap->setScale(2.f, 2.f);
 }
 
 void Overworld::SceneBase::TeleportUponReturn(const sf::Vector3f& position)
@@ -909,9 +753,8 @@ void Overworld::SceneBase::RemoveActor(const std::shared_ptr<Actor>& actor) {
 
 bool Overworld::SceneBase::IsInputLocked() {
     return
-        inputLocked || gotoNextScene || showMinimap ||
-        !personalMenu.IsClosed() ||
-        !menuSystem.IsClosed() ||
+        inputLocked || gotoNextScene ||
+        menuSystem.ShouldLockInput() ||
         !teleportController.IsComplete() || teleportController.TeleportedOut();
 }
 
@@ -1012,12 +855,12 @@ void Overworld::SceneBase::GotoKeyItems()
 
 Overworld::PersonalMenu& Overworld::SceneBase::GetPersonalMenu()
 {
-    return personalMenu;
+    return *personalMenu;
 }
 
 Overworld::Minimap& Overworld::SceneBase::GetMinimap()
 {
-    return minimap;
+    return *minimap;
 }
 
 Overworld::SpatialMap& Overworld::SceneBase::GetSpatialMap()
@@ -1062,11 +905,7 @@ Overworld::TeleportController& Overworld::SceneBase::GetTeleportController()
 
 SelectedNavi& Overworld::SceneBase::GetCurrentNavi()
 {
-<<<<<<< HEAD
     return currentNavi;
-=======
-  return currentNavi;
->>>>>>> development
 }
 
 std::shared_ptr<Background> Overworld::SceneBase::GetBackground()
@@ -1091,11 +930,7 @@ std::optional<CardFolder*> Overworld::SceneBase::GetSelectedFolder() {
 
 Overworld::MenuSystem& Overworld::SceneBase::GetMenuSystem()
 {
-<<<<<<< HEAD
     return menuSystem;
-=======
-  return menuSystem;
->>>>>>> development
 }
 
 void Overworld::SceneBase::AddItem(const std::string& id, const std::string& name, const std::string& description)
@@ -1155,37 +990,6 @@ const bool Overworld::SceneBase::IsMouseHovering(const sf::Vector2f& mouse, cons
     );
 
     return (mouse.x >= bounds.left && mouse.x <= bounds.left + bounds.width && mouse.y >= bounds.top && mouse.y <= bounds.top + bounds.height);
-}
-
-void Overworld::SceneBase::PrintTime(sf::RenderTarget& target)
-{
-    auto shadowColor = sf::Color(105, 105, 105);
-    std::string timeStr = CurrentTime::AsFormattedString("%OI:%OM %p");
-    time.SetString(timeStr);
-    time.setOrigin(time.GetLocalBounds().width, 0.f);
-    auto origin = time.GetLocalBounds().width;
-
-    auto pos = time.getPosition();
-    time.SetColor(shadowColor);
-    time.setPosition(pos.x + 2.f, pos.y + 2.f);
-    target.draw(time);
-
-    time.SetString(timeStr.substr(0, 5));
-    time.setPosition(pos);
-    time.SetColor(sf::Color::White);
-    target.draw(time);
-
-    auto pColor = sf::Color::Red;
-    time.SetString("AM");
-
-    if (timeStr[6] != 'A') {
-        pColor = sf::Color::Green;
-        time.SetString("PM");
-    }
-
-    time.setOrigin(time.GetLocalBounds().width, 0.f);
-    time.SetColor(pColor);
-    target.draw(time);
 }
 
 #ifdef __ANDROID__

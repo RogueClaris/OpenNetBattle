@@ -42,8 +42,7 @@ Overworld::OnlineArea::OnlineArea(
     uint16_t port,
     const std::string& connectData,
     uint16_t maxPayloadSize
-)
-:
+) :
     SceneBase(controller),
     transitionText(Font::Style::small),
     nameText(Font::Style::small),
@@ -77,89 +76,25 @@ Overworld::OnlineArea::OnlineArea(
 
     lastFrameNavi = this->GetCurrentNavi();
 
-    auto windowSize = getController().getVirtualWindowSize();
-    emote.setPosition(windowSize.x / 2.f, windowSize.y / 2.f);
     // emotes
-    GetPlayer()->AddNode(&emoteNode);
+    auto windowSize = getController().getVirtualWindowSize();
+    auto emoteWidget = std::make_shared<EmoteWidget>();
+    emoteWidget->setPosition(windowSize.x / 2.f, windowSize.y / 2.f);
+    emoteWidget->OnSelect(std::bind(&Overworld::OnlineArea::sendEmoteSignal, this, std::placeholders::_1));
+    GetMenuSystem().BindMenu(InputEvents::pressed_option, emoteWidget);
+
+    auto player = GetPlayer();
+    // move the emote above the player's head
+    float emoteY = -player->getSprite().getOrigin().y - 10;
+    emoteNode.setPosition(0, emoteY);
     emoteNode.SetLayer(-100);
     emoteNode.setScale(0.5f, 0.5f);
-    emote.OnSelect(std::bind(&Overworld::OnlineArea::OnEmoteSelected, this, std::placeholders::_1));
+    player->AddNode(&emoteNode);
+
     propertyAnimator.OnComplete([this] {
         // todo: this may cause issues when leaving the scene through Home and Server Warps
         GetPlayerController().ControlActor(GetPlayer());
         });
-}
-
-const std::shared_ptr<sf::Texture>& Overworld::OnlineArea::GetCustomEmotesTexture() const {
-    return customEmotesTexture;
-}
-
-void Overworld::OnlineArea::SetCustomEmotesTexture(const std::shared_ptr<sf::Texture>& texture) {
-    emoteNode.LoadCustomEmotes(texture);
-}
-
-<<<<<<< HEAD
-void Overworld::OnlineArea::OnEmoteSelectedCL(Emotes emote)
-{
-    emoteNode.Emote(emote);
-}
-
-void Overworld::OnlineArea::OnCustomEmoteSelected(unsigned emote)
-{
-    emoteNode.CustomEmote(emote);
-}
-
-Overworld::EmoteNode& Overworld::OnlineArea::GetEmoteNode()
-{
-    return emoteNode;
-}
-
-Overworld::EmoteWidget& Overworld::OnlineArea::GetEmoteWidget()
-{
-    return emote;
-=======
-  lastFrameNavi = this->GetCurrentNavi();
-  
-  auto windowSize = getController().getVirtualWindowSize();
-  emote.setPosition(windowSize.x / 2.f, windowSize.y / 2.f);
-  // emotes
-  GetPlayer()->AddNode(&emoteNode);
-  emoteNode.SetLayer(-100);
-  emoteNode.setScale(0.5f, 0.5f);
-  emote.OnSelect(std::bind(&Overworld::OnlineArea::OnEmoteSelected, this, std::placeholders::_1));
-  propertyAnimator.OnComplete([this] {
-    // todo: this may cause issues when leaving the scene through Home and Server Warps
-    GetPlayerController().ControlActor(GetPlayer());
-  });
->>>>>>> development
-}
-
-const std::shared_ptr<sf::Texture>& Overworld::OnlineArea::GetCustomEmotesTexture() const {
-    return customEmotesTexture;
-}
-
-void Overworld::OnlineArea::SetCustomEmotesTexture(const std::shared_ptr<sf::Texture>& texture) {
-    emoteNode.LoadCustomEmotes(texture);
-}
-
-void Overworld::OnlineArea::OnEmoteSelectedCL(Emotes emote)
-{
-    emoteNode.Emote(emote);
-}
-
-void Overworld::OnlineArea::OnCustomEmoteSelected(unsigned emote)
-{
-    emoteNode.CustomEmote(emote);
-}
-
-Overworld::EmoteNode& Overworld::OnlineArea::GetEmoteNode()
-{
-    return emoteNode;
-}
-
-Overworld::EmoteWidget& Overworld::OnlineArea::GetEmoteWidget()
-{
-    return emote;
 }
 
 Overworld::OnlineArea::~OnlineArea()
@@ -171,7 +106,7 @@ std::optional<Overworld::OnlineArea::AbstractUser> Overworld::OnlineArea::GetAbs
     if (id == ticket) {
         return AbstractUser{
           GetPlayer(),
-          GetEmoteNode(),
+          emoteNode,
           GetTeleportController(),
           propertyAnimator
         };
@@ -220,23 +155,6 @@ void Overworld::OnlineArea::onUpdate(double elapsed)
         return;
     }
 
-<<<<<<< HEAD
-
-=======
-  if (this->pvpRemoteAddress.size()) {
-      HandlePVPStep(pvpRemoteAddress);
-      return;
-  }
-
-
-
-  // remove players before update, to prevent removed players from being added to sprite layers
-  // players do not have a shared pointer to the emoteNode
-  // a segfault would occur if this loop is placed after onUpdate due to emoteNode being deleted
-  for (const auto& remove : removePlayers) {
-    auto it = onlinePlayers.find(remove);
->>>>>>> development
-
     // remove players before update, to prevent removed players from being added to sprite layers
     // players do not have a shared pointer to the emoteNode
     // a segfault would occur if this loop is placed after onUpdate due to emoteNode being deleted
@@ -256,12 +174,6 @@ void Overworld::OnlineArea::onUpdate(double elapsed)
     }
 
     removePlayers.clear();
-
-    auto currentNavi = GetCurrentNavi();
-    if (lastFrameNavi != currentNavi) {
-        sendAvatarChangeSignal();
-        lastFrameNavi = currentNavi;
-    }
 
     updateOtherPlayers(elapsed);
     updatePlayer(elapsed);
@@ -300,33 +212,6 @@ void Overworld::OnlineArea::onUpdate(double elapsed)
     warpCameraController.UpdateCamera(float(elapsed), camera);
     serverCameraController.UpdateCamera(float(elapsed), camera);
     UnlockCamera(); // reset lock, we'll lock it later if we need to
-
-<<<<<<< HEAD
-    if (!emote.IsClosed()) {
-        if (Input().Has(InputEvents::pressed_option)) {
-            emote.Close();
-        }
-        return;
-    }
-    else if (Input().Has(InputEvents::pressed_option)) {
-        emote.Open();
-    }
-=======
-  auto& camera = GetCamera();
-  warpCameraController.UpdateCamera(float(elapsed), camera);
-  serverCameraController.UpdateCamera(float(elapsed), camera);
-  UnlockCamera(); // reset lock, we'll lock it later if we need to
-
-  if (!emote.IsClosed()) {
-      if (Input().Has(InputEvents::pressed_option)) {
-          emote.Close();
-      }
-      return;
-  }
-  else if (Input().Has(InputEvents::pressed_option)) {
-      emote.Open();
-  }
->>>>>>> development
 }
 
 void Overworld::OnlineArea::HandlePVPStep(const std::string& remoteAddress)
@@ -500,14 +385,24 @@ void Overworld::OnlineArea::updateOtherPlayers(double elapsed) {
 }
 
 void Overworld::OnlineArea::updatePlayer(double elapsed) {
-<<<<<<< HEAD
     auto player = GetPlayer();
     auto playerPos = player->Get3DPosition();
 
     propertyAnimator.Update(*player, elapsed);
+    emoteNode.Update(elapsed);
+
+    auto currentNavi = GetCurrentNavi();
+    if (lastFrameNavi != currentNavi) {
+        sendAvatarChangeSignal();
+        lastFrameNavi = currentNavi;
+
+        // move the emote above the player's head
+        float emoteY = -GetPlayer()->getSprite().getOrigin().y - 10;
+        emoteNode.setPosition(0, emoteY);
+    }
 
     if (!IsInputLocked()) {
-        if (Input().Has(InputEvents::pressed_shoulder_right) && GetEmoteWidget().IsClosed()) {
+        if (Input().Has(InputEvents::pressed_shoulder_right)) {
             auto& meta = NAVIS.At(GetCurrentNavi());
             const std::string& image = meta.GetMugshotTexturePath();
             const std::string& anim = meta.GetMugshotAnimationPath();
@@ -525,28 +420,6 @@ void Overworld::OnlineArea::updatePlayer(double elapsed) {
                 });
 
             player->Face(Direction::down_right);
-=======
-  auto player = GetPlayer();
-  auto playerPos = player->Get3DPosition();
-
-  propertyAnimator.Update(*player, elapsed);
-  GetEmoteWidget().Update(elapsed);
-  if (!IsInputLocked()) {
-    if (Input().Has(InputEvents::pressed_shoulder_right) && GetEmoteWidget().IsClosed()) {
-      auto& meta = NAVIS.At(GetCurrentNavi());
-      const std::string& image = meta.GetMugshotTexturePath();
-      const std::string& anim = meta.GetMugshotAnimationPath();
-      auto mugshot = Textures().LoadTextureFromFile(image);
-      auto& menuSystem = GetMenuSystem();
-      menuSystem.SetNextSpeaker(sf::Sprite(*mugshot), anim);
-
-      menuSystem.EnqueueQuestion("Return to your homepage?", [this](bool result) {
-        if (result) {
-          GetTeleportController().TeleportOut(GetPlayer()).onFinish.Slot([this] {
-            this->sendLogoutSignal();
-            this->leave();
-          });
->>>>>>> development
         }
 
         if (playerPos.x != lastPosition.x || playerPos.y != lastPosition.y) {
@@ -558,18 +431,6 @@ void Overworld::OnlineArea::updatePlayer(double elapsed) {
     detectConveyor(player);
 
     lastPosition = playerPos;
-
-<<<<<<< HEAD
-    // move the emote above the player's head
-    float emoteY = -player->getSprite().getOrigin().y - 10;
-    emoteNode.setPosition(0, emoteY);
-=======
-  lastPosition = playerPos;
-
-  // move the emote above the player's head
-  float emoteY = -player->getSprite().getOrigin().y - 10;
-  emoteNode.setPosition(0, emoteY);
->>>>>>> development
 }
 
 void Overworld::OnlineArea::detectWarp(std::shared_ptr<Overworld::Actor>& player) {
@@ -902,19 +763,10 @@ void Overworld::OnlineArea::onDraw(sf::RenderTexture& surface)
 
     testActor(*GetPlayer());
 
-<<<<<<< HEAD
     nameText.setPosition(mousef);
     nameText.SetString(topName);
     nameText.setOrigin(-10.0f, 0);
     surface.draw(nameText);
-    surface.draw(emote);
-=======
-  nameText.setPosition(mousef);
-  nameText.SetString(topName);
-  nameText.setOrigin(-10.0f, 0);
-  surface.draw(nameText);
-  surface.draw(emote);
->>>>>>> development
 }
 
 void Overworld::OnlineArea::onStart()
@@ -1016,17 +868,6 @@ void Overworld::OnlineArea::OnInteract(Interaction type) {
         playerActor->GetElevation(),
         type
     );
-}
-
-void Overworld::OnlineArea::OnEmoteSelected(Overworld::Emotes emote)
-{
-<<<<<<< HEAD
-    OnlineArea::OnEmoteSelectedCL(emote);
-    sendEmoteSignal(emote);
-=======
-  OnlineArea::OnEmoteSelectedCL(emote);
-  sendEmoteSignal(emote);
->>>>>>> development
 }
 
 bool Overworld::OnlineArea::positionIsInWarp(sf::Vector3f position) {
@@ -1759,7 +1600,7 @@ void Overworld::OnlineArea::receivePreloadSignal(BufferReader& reader, const Poc
 void Overworld::OnlineArea::receiveCustomEmotesPathSignal(BufferReader& reader, const Poco::Buffer<char>& buffer) {
     auto path = reader.ReadString<uint16_t>(buffer);
 
-    SetCustomEmotesTexture(serverAssetManager.GetTexture(path));
+    emoteNode.LoadCustomEmotes(serverAssetManager.GetTexture(path));
 }
 
 void Overworld::OnlineArea::receiveMapSignal(BufferReader& reader, const Poco::Buffer<char>& buffer)
@@ -2405,7 +2246,7 @@ void Overworld::OnlineArea::receiveActorConnectedSignal(BufferReader& reader, co
     float emoteY = -actor->getSprite().getOrigin().y - 10;
     emoteNode.setPosition(0, emoteY);
     emoteNode.setScale(0.5f, 0.5f);
-    emoteNode.LoadCustomEmotes(GetCustomEmotesTexture());
+    emoteNode.LoadCustomEmotes(customEmotesTexture);
 
     auto& teleportController = onlinePlayer.teleportController;
 
@@ -2595,36 +2436,20 @@ void Overworld::OnlineArea::receiveActorEmoteSignal(BufferReader& reader, const 
     auto emote = reader.Read<uint8_t>(buffer);
     auto custom = reader.Read<bool>(buffer);
 
-<<<<<<< HEAD
-    if (user == ticket) {
-        if (custom) {
-            OnlineArea::OnCustomEmoteSelected(emote);
-        }
-        else {
-            OnlineArea::OnEmoteSelected((Emotes)emote);
-        }
+    auto optionalAbstractUser = GetAbstractUser(user);
+
+    if (!optionalAbstractUser) {
         return;
-=======
-  if (user == ticket) {
+    }
+
+    auto abstractUser = *optionalAbstractUser;
+    auto& emoteNode = abstractUser.emoteNode;
+
     if (custom) {
-      OnlineArea::OnCustomEmoteSelected(emote);
+        emoteNode.CustomEmote(emote);
     }
     else {
-      OnlineArea::OnEmoteSelected((Emotes)emote);
->>>>>>> development
-    }
-
-    auto userIter = onlinePlayers.find(user);
-
-    if (userIter != onlinePlayers.end()) {
-        auto& onlinePlayer = userIter->second;
-
-        if (custom) {
-            onlinePlayer.emoteNode.CustomEmote(emote);
-        }
-        else {
-            onlinePlayer.emoteNode.Emote((Emotes)emote);
-        }
+        emoteNode.Emote((Emotes)emote);
     }
 }
 

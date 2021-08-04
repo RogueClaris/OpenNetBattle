@@ -3,1016 +3,1016 @@
 #include "bnTextureResourceManager.h"
 #include "bnShaderResourceManager.h"
 #include "bnInputManager.h"
+#include "bnWebClientMananger.h"
 #include "bnCardLibrary.h"
 
 #define WILDCARD '*'
 
 void CardSelectionCust::RefreshAvailableCards(int handSize)
 {
-  // Stage valid available cards
-  // If other cards are not compatible, set their bucket state flag to voided
+    // Stage valid available cards
+    // If other cards are not compatible, set their bucket state flag to voided
 
-  enum class SelectionMode {
-    any,
-    same_name_or_code,
-    same_code,
-    same_name
-  };
+    enum class SelectionMode {
+        any,
+        same_name_or_code,
+        same_code,
+        same_name
+    };
 
-  // get info about the hand
-  auto resolvedCode = '*';
-  std::string resolvedName = "";
-  bool codeDiffers = false;
-  bool nameDiffers = false;
+    // get info about the hand
+    auto resolvedCode = '*';
+    std::string resolvedName = "";
+    bool codeDiffers = false;
+    bool nameDiffers = false;
 
-  for (int i = 0; i < handSize; i++) {
-    auto& selectedCard = newSelectQueue[i]->data;
-    auto name = selectedCard->GetShortName();
-    auto code = selectedCard->GetCode();
+    for (int i = 0; i < handSize; i++) {
+        auto& selectedCard = newSelectQueue[i]->data;
+        auto name = selectedCard->GetShortName();
+        auto code = selectedCard->GetCode();
 
-    if (i == 0) {
-      resolvedName = name;
-      resolvedCode = code;
-      continue;
+        if (i == 0) {
+            resolvedName = name;
+            resolvedCode = code;
+            continue;
+        }
+
+        if (code != WILDCARD) {
+            if (resolvedCode == WILDCARD) {
+                resolvedCode = code;
+            }
+            else if (resolvedCode != code) {
+                codeDiffers = true;
+            }
+        }
+
+        if (name != resolvedName) {
+            nameDiffers = true;
+        }
     }
 
-    if (code != WILDCARD) {
-      if (resolvedCode == WILDCARD) {
-        resolvedCode = code;
-      }
-      else if (resolvedCode != code) {
-        codeDiffers = true;
-      }
+    // resolve mode
+    auto selectionMode = SelectionMode::any;
+
+    if (nameDiffers && resolvedCode != WILDCARD) {
+        selectionMode = SelectionMode::same_code;
+    }
+    else if (codeDiffers) {
+        selectionMode = SelectionMode::same_name;
+    }
+    else if (resolvedCode != WILDCARD) {
+        selectionMode = SelectionMode::same_name_or_code;
     }
 
-    if (name != resolvedName) {
-      nameDiffers = true;
+    // voiding, this could be reduced
+    for (int i = 0; i < cardCount; i++) {
+        auto& bucket = queue[i];
+        auto* card = bucket.data;
+        bool matchingName = card->GetShortName() == resolvedName;
+        bool matchingCode = card->GetCode() == resolvedCode || card->GetCode() == WILDCARD;
+
+        bool shouldVoid = false;
+
+        switch (selectionMode) {
+        case SelectionMode::any:
+            // we could prob just skip this loop to begin with for SelectionMode::any
+            break;
+        case SelectionMode::same_name_or_code:
+            shouldVoid = !matchingName && !matchingCode;
+            break;
+        case SelectionMode::same_code:
+            shouldVoid = !matchingCode;
+            break;
+        case SelectionMode::same_name:
+            shouldVoid = !matchingName;
+            break;
+        }
+
+        if (shouldVoid) {
+            bucket.state = CardSelectionCust::Bucket::state::voided;
+        }
     }
-  }
-
-  // resolve mode
-  auto selectionMode = SelectionMode::any;
-
-  if (nameDiffers && resolvedCode != WILDCARD) {
-    selectionMode = SelectionMode::same_code;
-  }
-  else if (codeDiffers) {
-    selectionMode = SelectionMode::same_name;
-  }
-  else if (resolvedCode != WILDCARD) {
-    selectionMode = SelectionMode::same_name_or_code;
-  }
-
-  // voiding, this could be reduced
-  for (int i = 0; i < cardCount; i++) {
-    auto& bucket = queue[i];
-    auto* card = bucket.data;
-    bool matchingName = card->GetShortName() == resolvedName;
-    bool matchingCode = card->GetCode() == resolvedCode || card->GetCode() == WILDCARD;
-
-    bool shouldVoid = false;
-
-    switch (selectionMode) {
-    case SelectionMode::any:
-      // we could prob just skip this loop to begin with for SelectionMode::any
-      break;
-    case SelectionMode::same_name_or_code:
-      shouldVoid = !matchingName && !matchingCode;
-      break;
-    case SelectionMode::same_code:
-      shouldVoid = !matchingCode;
-      break;
-    case SelectionMode::same_name:
-      shouldVoid = !matchingName;
-      break;
-    }
-
-    if (shouldVoid) {
-      bucket.state = CardSelectionCust::Bucket::state::voided;
-    }
-  }
 }
 
 void CardSelectionCust::SetSelectedFormIndex(int index)
 {
-  if (selectedFormIndex != index)
-  {
-    previousFormItem = currentFormItem;
-    previousFormIndex = selectedFormIndex;
-    selectedFormIndex = index;
-    Broadcast(index);
-  }
+    if (selectedFormIndex != index)
+    {
+        previousFormItem = currentFormItem;
+        previousFormIndex = selectedFormIndex;
+        selectedFormIndex = index;
+        Broadcast(index);
+    }
 }
 
 CardSelectionCust::CardSelectionCust(const CardSelectionCust::Props& props) :
-  props(props),
-  greyscale(*Shaders().GetShader(ShaderType::GREYSCALE)),
-  textbox({ 4, 255 }),
-  isInView(false),
-  isInFormSelect(false),
-  playFormSound(false),
-  canInteract(true),
-  isDarkCardSelected(false),
-  darkCardShadowAlpha(0),
-  labelFont(Font::Style::thick),
-  codeFont(Font::Style::wide),
-  codeFont2(Font::Style::small),
-  label("", labelFont),
-  smCodeLabel("?", codeFont)
+    props(props),
+    greyscale(Shaders().GetShader(ShaderType::GREYSCALE)),
+    textbox({ 4, 255 }),
+    isInView(false),
+    isInFormSelect(false),
+    playFormSound(false),
+    canInteract(true),
+    isDarkCardSelected(false),
+    darkCardShadowAlpha(0),
+    labelFont(Font::Style::thick),
+    codeFont(Font::Style::wide),
+    codeFont2(Font::Style::small),
+    label("", labelFont),
+    smCodeLabel("?", codeFont)
 {
-  this->props.cap = std::min(this->props.cap, 8);
+    this->props.cap = std::min(this->props.cap, 8);
 
-  frameElapsed = 1;
-  queue = new Bucket[this->props.cap];
-  selectQueue = new Bucket*[this->props.cap];
-  newSelectQueue = new Bucket*[this->props.cap];
+    frameElapsed = 1;
+    queue = new Bucket[this->props.cap];
+    selectQueue = new Bucket * [this->props.cap];
+    newSelectQueue = new Bucket * [this->props.cap];
 
-  cardCount = selectCount = newSelectCount = cursorPos = cursorRow = 0;
+    cardCount = selectCount = newSelectCount = cursorPos = cursorRow = 0;
 
-  emblem.setScale(2.f, 2.f);
-  emblem.setPosition(194.0f, 14.0f);
+    emblem.setScale(2.f, 2.f);
+    emblem.setPosition(194.0f, 14.0f);
 
-  custSprite = sf::Sprite(*Textures().GetTexture(TextureType::CHIP_SELECT_MENU));
-  custSprite.setScale(2.f, 2.f);
-  custSprite.setPosition(-custSprite.getTextureRect().width*2.f, 0);
+    custSprite = sf::Sprite(*Textures().GetTexture(TextureType::CHIP_SELECT_MENU));
+    custSprite.setScale(2.f, 2.f);
+    custSprite.setPosition(-custSprite.getTextureRect().width * 2.f, 0);
 
-  custDarkCardOverlay = sf::Sprite(*LOAD_TEXTURE(CHIP_SELECT_DARK_OVERLAY));
-  custDarkCardOverlay.setScale(2.f, 2.f);
-  custDarkCardOverlay.setPosition(custSprite.getPosition());
+    custDarkCardOverlay = sf::Sprite(*LOAD_TEXTURE(CHIP_SELECT_DARK_OVERLAY));
+    custDarkCardOverlay.setScale(2.f, 2.f);
+    custDarkCardOverlay.setPosition(custSprite.getPosition());
 
-  custMegaCardOverlay = custDarkCardOverlay;
-  custMegaCardOverlay.setTexture(*LOAD_TEXTURE(CHIP_SELECT_MEGA_OVERLAY));
+    custMegaCardOverlay = custDarkCardOverlay;
+    custMegaCardOverlay.setTexture(*LOAD_TEXTURE(CHIP_SELECT_MEGA_OVERLAY));
 
-  custGigaCardOverlay = custDarkCardOverlay;
-  custGigaCardOverlay.setTexture(*LOAD_TEXTURE(CHIP_SELECT_GIGA_OVERLAY));
+    custGigaCardOverlay = custDarkCardOverlay;
+    custGigaCardOverlay.setTexture(*LOAD_TEXTURE(CHIP_SELECT_GIGA_OVERLAY));
 
-  // TODO: fully use scene nodes on all card slots and the GUI sprite
-  // AddSprite(custSprite);
+    // TODO: fully use scene nodes on all card slots and the GUI sprite
+    // AddSprite(custSprite);
 
-  auto iconSize = sf::IntRect{ 0,0,14,14 };
-  auto iconScale = sf::Vector2f(2.f, 2.f);
-  icon.setTextureRect(iconSize);
-  icon.setScale(iconScale);
+    auto iconSize = sf::IntRect{ 0,0,14,14 };
+    auto iconScale = sf::Vector2f(2.f, 2.f);
+    icon.setTextureRect(iconSize);
+    icon.setScale(iconScale);
 
-  element.setTexture(Textures().GetTexture(TextureType::ELEMENT_ICON));
-  element.setScale(2.f, 2.f);
-  element.setPosition(2.f*25.f, 146.f);
+    element.setTexture(Textures().GetTexture(TextureType::ELEMENT_ICON));
+    element.setScale(2.f, 2.f);
+    element.setPosition(2.f * 25.f, 146.f);
 
-  cursorSmall = sf::Sprite(*Textures().GetTexture(TextureType::CHIP_CURSOR_SMALL));
-  cursorSmall.setScale(sf::Vector2f(2.f, 2.f));
+    cursorSmall = sf::Sprite(*Textures().GetTexture(TextureType::CHIP_CURSOR_SMALL));
+    cursorSmall.setScale(sf::Vector2f(2.f, 2.f));
 
-  cursorBig = sf::Sprite(*Textures().GetTexture(TextureType::CHIP_CURSOR_BIG));
-  cursorBig.setScale(sf::Vector2f(2.f, 2.f));
+    cursorBig = sf::Sprite(*Textures().GetTexture(TextureType::CHIP_CURSOR_BIG));
+    cursorBig.setScale(sf::Vector2f(2.f, 2.f));
 
-  // never moves
-  cursorBig.setPosition(sf::Vector2f(2.f*104.f, 2.f*122.f));
+    // never moves
+    cursorBig.setPosition(sf::Vector2f(2.f * 104.f, 2.f * 122.f));
 
-  cardLock = sf::Sprite(*LOAD_TEXTURE(CHIP_LOCK));
-  cardLock.setScale(sf::Vector2f(2.f, 2.f));
+    cardLock = sf::Sprite(*LOAD_TEXTURE(CHIP_LOCK));
+    cardLock.setScale(sf::Vector2f(2.f, 2.f));
 
-  cardCard.setScale(2.f, 2.f);
-  cardCard.setPosition(2.f*16.f, 48.f);
-  cardCard.setTextureRect(sf::IntRect{0, 0, 56, 48});
+    cardCard.setScale(2.f, 2.f);
+    cardCard.setPosition(2.f * 16.f, 48.f);
+    cardCard.setTextureRect(sf::IntRect{ 0, 0, 56, 48 });
 
-  cardNoData.setTexture(Textures().GetTexture(TextureType::CHIP_NODATA));
-  cardNoData.setScale(2.f, 2.f);
-  cardNoData.setPosition(2.f*16.f, 48.f);
+    cardNoData.setTexture(Textures().GetTexture(TextureType::CHIP_NODATA));
+    cardNoData.setScale(2.f, 2.f);
+    cardNoData.setPosition(2.f * 16.f, 48.f);
 
-  cardSendData.setTexture(Textures().GetTexture(TextureType::CHIP_SENDDATA));
-  cardSendData.setScale(2.f, 2.f);
-  cardSendData.setPosition(2.f*16.f, 48.f);
+    cardSendData.setTexture(Textures().GetTexture(TextureType::CHIP_SENDDATA));
+    cardSendData.setScale(2.f, 2.f);
+    cardSendData.setPosition(2.f * 16.f, 48.f);
 
-  smCodeLabel.SetColor(sf::Color::Yellow);
+    smCodeLabel.SetColor(sf::Color::Yellow);
 
-  cursorSmallAnimator = Animation("resources/ui/cursor_small.animation");
-  cursorSmallAnimator.Reload();
-  cursorSmallAnimator.SetAnimation("BLINK");
-  cursorSmallAnimator << Animator::Mode::Loop;
+    cursorSmallAnimator = Animation("resources/ui/cursor_small.animation");
+    cursorSmallAnimator.Reload();
+    cursorSmallAnimator.SetAnimation("BLINK");
+    cursorSmallAnimator << Animator::Mode::Loop;
 
-  cursorBigAnimator = Animation("resources/ui/cursor_big.animation");
-  cursorBigAnimator.Reload();
-  cursorBigAnimator.SetAnimation("BLINK");
-  cursorBigAnimator << Animator::Mode::Loop;
+    cursorBigAnimator = Animation("resources/ui/cursor_big.animation");
+    cursorBigAnimator.Reload();
+    cursorBigAnimator.SetAnimation("BLINK");
+    cursorBigAnimator << Animator::Mode::Loop;
 
-  formSelectAnimator = Animation("resources/ui/form_select.animation");
-  formSelectAnimator.Reload();
-  formSelectAnimator.SetAnimation("CLOSED");
+    formSelectAnimator = Animation("resources/ui/form_select.animation");
+    formSelectAnimator.Reload();
+    formSelectAnimator.SetAnimation("CLOSED");
 
-  formCursorAnimator = Animation("resources/ui/form_cursor.animation");
-  formCursorAnimator.Reload();
-  formCursorAnimator.SetAnimation("BLINK");
-  formCursorAnimator << Animator::Mode::Loop;
+    formCursorAnimator = Animation("resources/ui/form_cursor.animation");
+    formCursorAnimator.Reload();
+    formCursorAnimator.SetAnimation("BLINK");
+    formCursorAnimator << Animator::Mode::Loop;
 
-  formSelectQuitTimer = 0.f; // used to time out the activation
-  selectedFormRow = lockedInFormIndex = -1;
-  SetSelectedFormIndex(selectedFormRow);
+    formSelectQuitTimer = 0.f; // used to time out the activation
+    selectedFormRow = lockedInFormIndex = -1;
+    SetSelectedFormIndex(selectedFormRow);
 
-  formSelectQuitTimer = 0.f; // used to time out the activation
+    formSelectQuitTimer = 0.f; // used to time out the activation
 
-  formItemBG.setTexture(*LOAD_TEXTURE(CUST_FORM_ITEM_BG));
-  formItemBG.setScale(2.f, 2.f);
+    formItemBG.setTexture(*LOAD_TEXTURE(CUST_FORM_ITEM_BG));
+    formItemBG.setScale(2.f, 2.f);
 
-  formSelect.setTexture(LOAD_TEXTURE(CUST_FORM_SELECT));
-  formCursor.setTexture(LOAD_TEXTURE(CUST_FORM_CURSOR));
+    formSelect.setTexture(LOAD_TEXTURE(CUST_FORM_SELECT));
+    formCursor.setTexture(LOAD_TEXTURE(CUST_FORM_CURSOR));
 
-  formSelect.setScale(2.f, 2.f);
-  formCursor.setScale(2.f, 2.f);
+    formSelect.setScale(2.f, 2.f);
+    formCursor.setScale(2.f, 2.f);
 
-  //setScale(0.5f, 0.5); // testing transforms
-  label.setScale(2.f, 2.f);
-  smCodeLabel.setScale(2.f, 2.f);
+    //setScale(0.5f, 0.5); // testing transforms
+    label.setScale(2.f, 2.f);
+    smCodeLabel.setScale(2.f, 2.f);
 }
 
 
 CardSelectionCust::~CardSelectionCust() {
-  ClearCards();
+    ClearCards();
 
-  if (cardCount > 0) {
-    delete[] queue;
-    delete[] selectQueue;
-  }
+    if (cardCount > 0) {
+        delete[] queue;
+        delete[] selectQueue;
+    }
 
-  free(selectedCards);
+    free(selectedCards);
 
-  cardCount = 0;
+    cardCount = 0;
 
-  delete props._folder;
+    delete props._folder;
 }
 
 bool CardSelectionCust::CursorUp() {
-  if (isInFormSelect) {
-    if (--formCursorRow < 0) {
-      formCursorRow = 0;
-      return false;
+    if (isInFormSelect) {
+        if (--formCursorRow < 0) {
+            formCursorRow = 0;
+            return false;
+        }
+
+        return true;
     }
+    else {
+        if (--cursorRow < 0) {
+            cursorRow = 0;
 
-    return true;
-  }
-  else {
-    if (--cursorRow < 0) {
-      cursorRow = 0;
+            if (forms.size()) {
+                auto onEnd = [this]() {
+                    formSelectAnimator << "OPEN";
+                };
 
-      if (forms.size()) {
-        auto onEnd = [this]() {
-          formSelectAnimator << "OPEN";
-        };
+                formSelectAnimator << "OPENING" << onEnd;
+                isInFormSelect = true;
+                cursorPos = cursorRow = 0;
+                Audio().Play(AudioType::CHIP_DESC);
+            }
+            return false;
+        }
 
-        formSelectAnimator << "OPENING" << onEnd;
-        isInFormSelect = true;
-        cursorPos = cursorRow = 0;
-        Audio().Play(AudioType::CHIP_DESC);
-      }
-      return false;
+        return true;
     }
-
-    return true;
-  }
 }
 
 bool CardSelectionCust::CursorDown() {
-  if (isInFormSelect) {
-    if (forms.size() == 0) return false;
+    if (isInFormSelect) {
+        if (forms.size() == 0) return false;
 
-    if (++formCursorRow >= forms.size()) {
-      formCursorRow = int(forms.size() - 1);
+        if (++formCursorRow >= forms.size()) {
+            formCursorRow = int(forms.size() - 1);
 
-      return false;
+            return false;
+        }
+
+        return true;
     }
+    else {
+        if (++cursorRow > 1) {
+            cursorRow = 1;
 
-    return true;
-  }
-  else {
-    if (++cursorRow > 1) {
-      cursorRow = 1;
+            return false;
+        }
 
-      return false;
+        if (cursorPos > 2) {
+            cursorPos = 0;
+        }
+
+        return true;
     }
-
-    if (cursorPos > 2) {
-      cursorPos = 0;
-    }
-
-    return true;
-  }
 }
 
 bool CardSelectionCust::CursorRight() {
-  if (isInFormSelect) return false;
+    if (isInFormSelect) return false;
 
-  if (++cursorPos > 2 && cursorRow == 1) {
-    cursorPos = 5;
-    cursorRow = 0;
-  }
-  else if (cursorPos > 5 && cursorRow == 0) {
-    cursorPos = 0;
-  }
+    if (++cursorPos > 2 && cursorRow == 1) {
+        cursorPos = 5;
+        cursorRow = 0;
+    }
+    else if (cursorPos > 5 && cursorRow == 0) {
+        cursorPos = 0;
+    }
 
-  return true;
+    return true;
 }
 
 bool CardSelectionCust::CursorLeft() {
-  if (isInFormSelect) return false;
+    if (isInFormSelect) return false;
 
-  if (--cursorPos < 0 && cursorRow == 1) {
-    cursorPos = 5;
-    cursorRow = 0;
-  }
-  else if (cursorPos < 0 && cursorRow == 0) {
-    cursorPos = 5;
-  }
+    if (--cursorPos < 0 && cursorRow == 1) {
+        cursorPos = 5;
+        cursorRow = 0;
+    }
+    else if (cursorPos < 0 && cursorRow == 0) {
+        cursorPos = 5;
+    }
 
-  return true;
+    return true;
 }
 
 bool CardSelectionCust::CursorAction() {
-  if (isInFormSelect) {
-    SetSelectedFormIndex(static_cast<int>(forms[formCursorRow]->GetFormIndex()));
+    if (isInFormSelect) {
+        SetSelectedFormIndex(static_cast<int>(forms[formCursorRow]->GetFormIndex()));
 
-    if (selectedFormRow != -1 && selectedFormIndex == forms[selectedFormRow]->GetFormIndex()) {
-      selectedFormRow = -1; // de-select the form
+        if (selectedFormRow != -1 && selectedFormIndex == forms[selectedFormRow]->GetFormIndex()) {
+            selectedFormRow = -1; // de-select the form
 
-      if (lockedInFormIndex == -1) {
-        currentFormItem = sf::Sprite();
-        SetSelectedFormIndex(-1);
-      }
-      else {
-        SetSelectedFormIndex(lockedInFormIndex);
-        currentFormItem = lockedInFormItem;
-      }
+            if (lockedInFormIndex == -1) {
+                currentFormItem = sf::Sprite();
+                SetSelectedFormIndex(-1);
+            }
+            else {
+                SetSelectedFormIndex(lockedInFormIndex);
+                currentFormItem = lockedInFormItem;
+            }
 
-      Audio().Play(AudioType::DEFORM);
-    }
-    else {
-      formSelectQuitTimer = seconds_cast<float>(frames(30));
-      selectedFormRow = formCursorRow;
-      currentFormItem = formUI[formCursorRow];
-    }
-    return true;
-  }
-
-  // Should never happen but just in case
-  if (newSelectCount > 5) {
-    return false;
-  }
-
-  if (cursorPos == 5 && cursorRow == 0) {
-    // End card select
-    areCardsReady = true;
-  } else {
-    // Does card exist
-    if (cursorPos + (5 * cursorRow) < cardCount) {
-      // Queue this card if not selected
-      if (queue[cursorPos + (5 * cursorRow)].state == Bucket::state::staged) {
-        newSelectQueue[newSelectCount++] = &queue[cursorPos + (5 * cursorRow)];
-        queue[cursorPos + (5 * cursorRow)].state = Bucket::state::queued;
-        newHand = true;
-
-        // We can only upload 5 cards to player...
-        if (newSelectCount == 5) {
-          for (int i = 0; i < cardCount; i++) {
-            if (queue[i].state == Bucket::state::queued) continue;
-
-            queue[i].state = Bucket::state::voided;
-          }
-
-          emblem.CreateWireEffect();
-          return true;
+            Audio().Play(AudioType::DEFORM);
         }
         else {
-          RefreshAvailableCards(newSelectCount);
-
-          emblem.CreateWireEffect();
-          return true;
+            formSelectQuitTimer = seconds_cast<float>(frames(30));
+            selectedFormRow = formCursorRow;
+            currentFormItem = formUI[formCursorRow];
         }
-      }
+        return true;
     }
-  }
-  return false;
+
+    // Should never happen but just in case
+    if (newSelectCount > 5) {
+        return false;
+    }
+
+    if (cursorPos == 5 && cursorRow == 0) {
+        // End card select
+        areCardsReady = true;
+    }
+    else {
+        // Does card exist
+        if (cursorPos + (5 * cursorRow) < cardCount) {
+            // Queue this card if not selected
+            if (queue[cursorPos + (5 * cursorRow)].state == Bucket::state::staged) {
+                newSelectQueue[newSelectCount++] = &queue[cursorPos + (5 * cursorRow)];
+                queue[cursorPos + (5 * cursorRow)].state = Bucket::state::queued;
+                newHand = true;
+
+                // We can only upload 5 cards to player...
+                if (newSelectCount == 5) {
+                    for (int i = 0; i < cardCount; i++) {
+                        if (queue[i].state == Bucket::state::queued) continue;
+
+                        queue[i].state = Bucket::state::voided;
+                    }
+
+                    emblem.CreateWireEffect();
+                    return true;
+                }
+                else {
+                    RefreshAvailableCards(newSelectCount);
+
+                    emblem.CreateWireEffect();
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 bool CardSelectionCust::CursorCancel() {
-  if (isInFormSelect) {
-    formSelectAnimator.SetAnimation("CLOSED");
-    formCursorRow = 0;
-    isInFormSelect = false;
-    cursorPos = cursorRow = 0;
-    return true;
-  }
-
-  // Unqueue all cards buckets
-  if (newSelectCount > 0) {
-    newSelectQueue[--newSelectCount]->state = Bucket::state::staged;
-  }
-  else if (newSelectCount < 0) {
-    newSelectCount = 0;
-  }
-  
-
-  // Everything is selectable again
-  for (int i = 0; i < cardCount; i++) {
-    queue[i].state = Bucket::state::staged;
-  }
-
-  for (int i = 0; i < newSelectCount; i++) {
-    newSelectQueue[i]->state = Bucket::state::queued;
-  }
-
-  if (newSelectCount == 0) {
-    newHand = false;
-    if (lockedInFormIndex != GetSelectedFormIndex()) {
-        currentFormItem.setTexture(*previousFormItem.getTexture());
-        SetSelectedFormIndex(previousFormIndex);
-        selectedFormRow = -1;
-<<<<<<< HEAD
-        
-=======
->>>>>>> development
+    if (isInFormSelect) {
+        formSelectAnimator.SetAnimation("CLOSED");
+        formCursorRow = 0;
+        isInFormSelect = false;
+        cursorPos = cursorRow = 0;
+        return true;
     }
-    // This is also where beastout card would be removed from queue
-    // when beastout is available
+
+    // Unqueue all cards buckets
+    if (newSelectCount > 0) {
+        newSelectQueue[--newSelectCount]->state = Bucket::state::staged;
+        return true;
+    }
+    else if (newSelectCount < 0) {
+        newSelectCount = 0;
+        return true;
+    }
+    if (newSelectCount == 0) {
+        newHand = false;
+        if (lockedInFormIndex != GetSelectedFormIndex()) {
+            currentFormItem.setTexture(*previousFormItem.getTexture());
+            SetSelectedFormIndex(previousFormIndex);
+            selectedFormRow = -1;
+
+            // This is also where beastout card would be removed from queue
+            // when beastout is available
+            return true;
+        }
+    }
+
+    // Everything is selectable again
+    for (int i = 0; i < cardCount; i++) {
+        queue[i].state = Bucket::state::staged;
+    }
+
+    for (int i = 0; i < newSelectCount; i++) {
+        newSelectQueue[i]->state = Bucket::state::queued;
+    }
+
+    /*
+      Compatible card states are built upon adding cards from the last available card states.
+      The only way to "revert" to the last compatible card states is to step through the already selected
+      card queue and build up the state again.
+    */
+
+    for (int i = 0; i < newSelectCount; i++) {
+        RefreshAvailableCards(i + 1);
+    }
 
     emblem.UndoWireEffect();
     return true;
-  }
-
-  /*
-    Compatible card states are built upon adding cards from the last available card states.
-    The only way to "revert" to the last compatible card states is to step through the already selected
-    card queue and build up the state again.
-  */
-
-  for(int i = 0; i < newSelectCount; i++) {
-    RefreshAvailableCards(i+1);
-  }
-
-  emblem.UndoWireEffect();
-  return true;
 }
 
 // This moves the cursor to OK but does not press it
 bool CardSelectionCust::CursorSelectOK()
 {
-  if (isInFormSelect || (cursorPos == 5 && cursorRow == 0)) return false;
+    if (isInFormSelect || (cursorPos == 5 && cursorRow == 0)) return false;
 
-  cursorPos = 5;
-  cursorRow = 0;
+    cursorPos = 5;
+    cursorRow = 0;
 
-  return true;
+    return true;
 }
 
 bool CardSelectionCust::IsOutOfView() {
-  float bounds = 0;
+    float bounds = 0;
 
-  if (getPosition().x <= bounds) {
-    setPosition(bounds, getPosition().y);
+    if (getPosition().x <= bounds) {
+        setPosition(bounds, getPosition().y);
 
-    if (RequestedRetreat()) {
-      ResetPlayerFormSelection();
-      selectedFormRow = -1;
+        if (RequestedRetreat()) {
+            ResetPlayerFormSelection();
+            selectedFormRow = -1;
+        }
     }
-  }
 
-  return (getPosition().x == bounds);
+    return (getPosition().x == bounds);
 }
 
 const bool CardSelectionCust::IsInView() {
-  float bounds = custSprite.getTextureRect().width*2.f;
+    float bounds = custSprite.getTextureRect().width * 2.f;
 
-  // std::cout << "getPosition().x: " << getPosition().x << std::endl;
+    // std::cout << "getPosition().x: " << getPosition().x << std::endl;
 
-  if (getPosition().x >= bounds) {
-    setPosition(bounds, getPosition().y);
-  }
+    if (getPosition().x >= bounds) {
+        setPosition(bounds, getPosition().y);
+    }
 
-  return (getPosition().x == bounds);
+    return (getPosition().x == bounds);
 }
 
 bool CardSelectionCust::IsTextBoxOpen()
 {
-  return textbox.IsOpen();
+    return textbox.IsOpen();
 }
 
 bool CardSelectionCust::IsTextBoxClosed()
 {
-  return textbox.IsClosed();
+    return textbox.IsClosed();
 }
 
 AnimatedTextBox& CardSelectionCust::GetTextBox()
 {
-  return textbox;
+    return textbox;
 }
 
 const bool CardSelectionCust::IsDarkCardSelected()
 {
-  return this->isDarkCardSelected && !this->IsHidden() && this->IsInView();
+    return this->isDarkCardSelected && !this->IsHidden() && this->IsInView();
 }
 
 void CardSelectionCust::Move(sf::Vector2f delta) {
-  setPosition(getPosition() + delta);
-  IsInView();
+    setPosition(getPosition() + delta);
+    IsInView();
 }
 
 bool CardSelectionCust::OpenTextBox()
 {
-  if (isInFormSelect) return false;
+    if (isInFormSelect) return false;
 
-  int index = cursorPos + (5 * cursorRow);
+    int index = cursorPos + (5 * cursorRow);
 
-  if (!IsInView() || textbox.IsOpen() ||
-    (cursorPos == 5 && cursorRow == 0) || (index >= cardCount)) return false;
+    if (!IsInView() || textbox.IsOpen() ||
+        (cursorPos == 5 && cursorRow == 0) || (index >= cardCount)) return false;
 
-  textbox.DescribeCard(queue[index].data);
+    textbox.DescribeCard(queue[index].data);
 
-  return true;
+    return true;
 }
 
 const bool CardSelectionCust::HasQuestion() const
 {
-  return textbox.HasQuestion();
+    return textbox.HasQuestion();
 }
 
 bool CardSelectionCust::ContinueTextBox() {
-  if (isInFormSelect) return false;
-  if (!IsInView() || textbox.IsClosed()) return false;
+    if (isInFormSelect) return false;
+    if (!IsInView() || textbox.IsClosed()) return false;
 
-  // textbox.Continue();
-  return false;
+    // textbox.Continue();
+    return false;
 }
 
 bool CardSelectionCust::FastForwardTextBox(double factor) {
-  if (isInFormSelect) return false;
-  if (!IsInView() || textbox.IsClosed()) return false;
+    if (isInFormSelect) return false;
+    if (!IsInView() || textbox.IsClosed()) return false;
 
-  textbox.SetTextSpeed(factor);
+    textbox.SetTextSpeed(factor);
 
-  return true;
+    return true;
 }
 
 bool CardSelectionCust::CloseTextBox() {
-  if (isInFormSelect) return false;
-  if (!IsInView() || textbox.IsClosed()) return false;
+    if (isInFormSelect) return false;
+    if (!IsInView() || textbox.IsClosed()) return false;
 
-  textbox.Close();
+    textbox.Close();
 
-  return true;
+    return true;
 }
 
 void CardSelectionCust::SetSpeaker(const sf::Sprite& mug, const Animation& anim)
 {
-  textbox.SetSpeaker(mug, anim);
+    textbox.SetSpeaker(mug, anim);
 }
 
 void CardSelectionCust::PromptRetreat()
 {
-  if (!IsInView() || textbox.IsOpen() || isInFormSelect) return;
+    if (!IsInView() || textbox.IsOpen() || isInFormSelect) return;
 
-  textbox.PromptRetreat();
+    textbox.PromptRetreat();
 }
 
 bool CardSelectionCust::TextBoxSelectYes() {
-  if (isInFormSelect) return false;
-  if (!IsInView() || textbox.IsClosed()) return false;
+    if (isInFormSelect) return false;
+    if (!IsInView() || textbox.IsClosed()) return false;
 
-  return textbox.SelectYes();
+    return textbox.SelectYes();
 }
 
 bool CardSelectionCust::TextBoxSelectNo() {
-  if (!IsInView() || textbox.IsClosed()) return false;
+    if (!IsInView() || textbox.IsClosed()) return false;
 
-  return textbox.SelectNo();
+    return textbox.SelectNo();
 }
 
 
 bool CardSelectionCust::TextBoxConfirmQuestion() {
-  if (isInFormSelect) return false;
-  if (!IsInView() || textbox.IsClosed()) return false;
+    if (isInFormSelect) return false;
+    if (!IsInView() || textbox.IsClosed()) return false;
 
-  textbox.ConfirmSelection();
-  return true; // play audio
+    textbox.ConfirmSelection();
+    return true; // play audio
 }
 
 void CardSelectionCust::GetNextCards() {
+    emblem.Reset();
 
-  bool selectFirstDarkCard = true;
+    bool selectFirstDarkCard = true;
 
-  for (int i = cardCount; i < props.cap; i++) {
+    for (int i = cardCount; i < props.cap; i++) {
 
-    // The do-while loop ensures that only cards parsed successfully
-    // should be used in combat
-    do {
-      queue[i].data = props._folder->Next();
+        // The do-while loop ensures that only cards parsed successfully
+        // should be used in combat
+        do {
+            queue[i].data = props._folder->Next();
 
-      if (!queue[i].data) {
-        // nullptr is end of list
-        return;
-      }
+            if (!queue[i].data) {
+                // nullptr is end of list
+                return;
+            }
 
-      bool isDarkCard = queue[i].data->GetClass() == Battle::CardClass::dark;
+            bool isDarkCard = queue[i].data->GetClass() == Battle::CardClass::dark;
 
-      // This auto-selects the first dark card if visible
-      if (selectFirstDarkCard && isDarkCard) {
-        cursorPos = i % 5;
-        cursorRow = i / 5;
-        selectFirstDarkCard = false;
-      }
+            // This auto-selects the first dark card if visible
+            if (selectFirstDarkCard && isDarkCard) {
+                cursorPos = i % 5;
+                cursorRow = i / 5;
+                selectFirstDarkCard = false;
+            }
 
-      // NOTE: IsCardValid() will be used for scripted cards again... for now disable the check
-    } while (false /*!CHIPLIB.IsCardValid(*queue[i].data)*/);
+            // NOTE: IsCardValid() will be used for scripted cards again... for now disable the check
+        } while (false /*!CHIPLIB.IsCardValid(*queue[i].data)*/);
 
-    queue[i].state = Bucket::state::staged;
+        queue[i].state = Bucket::state::staged;
 
-    cardCount++;
-    props.perTurn--;
+        cardCount++;
+        props.perTurn--;
 
-   if (props.perTurn == 0) return;
-  }
+        if (props.perTurn == 0) return;
+    }
 }
 
 void CardSelectionCust::SetPlayerFormOptions(const std::vector<PlayerFormMeta*> forms)
 {
-  for (auto&& f : forms) {
-    this->forms.push_back(f);
-    sf::Sprite ui;
-    ui.setTexture(*Textures().LoadTextureFromFile(f->GetUIPath()));
-    ui.setScale(2.f, 2.f);
-    formUI.push_back(ui);
-  }
+    for (auto&& f : forms) {
+        this->forms.push_back(f);
+        sf::Sprite ui;
+        ui.setTexture(*Textures().LoadTextureFromFile(f->GetUIPath()));
+        ui.setScale(2.f, 2.f);
+        formUI.push_back(ui);
+    }
 }
 
 void CardSelectionCust::ResetPlayerFormSelection()
 {
-  SetSelectedFormIndex(-1);
-  selectedFormRow = -1;
-  lockedInFormIndex = selectedFormIndex;
-  lockedInFormItem = currentFormItem = sf::Sprite();
+    SetSelectedFormIndex(-1);
+    selectedFormRow = -1;
+    lockedInFormIndex = selectedFormIndex;
+    lockedInFormItem = currentFormItem = sf::Sprite();
 }
 
 void CardSelectionCust::LockInPlayerFormSelection()
 {
-  lockedInFormIndex = selectedFormIndex;
-  lockedInFormItem = currentFormItem;
+    lockedInFormIndex = selectedFormIndex;
+    lockedInFormItem = currentFormItem;
 }
 
 void CardSelectionCust::ErasePlayerFormOption(size_t index)
 {
-  for (int i = 0; i < this->forms.size() && this->formUI.size(); i++) {
-    if (this->forms[i]->GetFormIndex() == index) {
-      this->forms.erase(this->forms.begin() + i);
-      this->formUI.erase(this->formUI.begin() + i);
+    for (int i = 0; i < this->forms.size() && this->formUI.size(); i++) {
+        if (this->forms[i]->GetFormIndex() == index) {
+            this->forms.erase(this->forms.begin() + i);
+            this->formUI.erase(this->formUI.begin() + i);
+        }
     }
-  }
 
-  // reset the row selection pos but keep the form index selection active
-  selectedFormRow = -1;
+    // reset the row selection pos but keep the form index selection active
+    selectedFormRow = -1;
 }
 
-void CardSelectionCust::draw(sf::RenderTarget & target, sf::RenderStates states) const {
-  if(IsHidden()) return;
+void CardSelectionCust::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    if (IsHidden()) return;
 
-  ResourceHandle handle;
+    ResourceHandle handle;
 
-  states.transform = getTransform();
+    states.transform = getTransform();
 
-  auto offset = -custSprite.getTextureRect().width*2.f; // TODO: this will be uneccessary once we use AddSprite() for all rendered items below
-  custSprite.setPosition(-sf::Vector2f(custSprite.getTextureRect().width*2.f, 0));
-  target.draw(custSprite, states);
+    auto offset = -custSprite.getTextureRect().width * 2.f; // TODO: this will be uneccessary once we use AddSprite() for all rendered items below
+    custSprite.setPosition(-sf::Vector2f(custSprite.getTextureRect().width * 2.f, 0));
+    target.draw(custSprite, states);
 
-  int index = cursorPos + (5 * cursorRow);
+    int index = cursorPos + (5 * cursorRow);
 
-  // Make sure we are not selecting "OK" and we have a valid card highlighted
-  if (index < cardCount && !(cursorPos == 5 && cursorRow == 0)) {
-    switch (this->queue[index].data->GetClass()) {
-    case Battle::CardClass::mega:
-      custMegaCardOverlay.setPosition(custSprite.getPosition());
-      target.draw(custMegaCardOverlay, states);
-      break;
-    case Battle::CardClass::giga:
-      custGigaCardOverlay.setPosition(custSprite.getPosition());
-      target.draw(custGigaCardOverlay, states);
-      break;
-    case Battle::CardClass::dark:
-      custDarkCardOverlay.setPosition(custSprite.getPosition());
-      target.draw(custDarkCardOverlay, states);
-      break;
-    }
-  }
-
-  auto lastEmblemPos = emblem.getPosition();
-  emblem.setPosition(emblem.getPosition() + sf::Vector2f(offset, 0));
-  target.draw(emblem, states);
-  emblem.setPosition(lastEmblemPos);
-
-  float x = swoosh::ease::interpolate(static_cast<float>(frameElapsed*25), offset + static_cast<float>((2.f*(16.0f + (cursorPos*16.0f)))), cursorSmall.getPosition().x);
-  float y = swoosh::ease::interpolate(static_cast<float>(frameElapsed * 25), static_cast<float>(2.f*(113.f + (cursorRow*24.f))), cursorSmall.getPosition().y);
-
-  cursorSmall.setPosition(x, y); // TODO: Make this relative to cust instead of screen. hint: scene nodes
-
-  int row = 0;
-  for (int i = 0; i < cardCount; i++) {
-    if (i > 4) {
-      row = 1;
+    // Make sure we are not selecting "OK" and we have a valid card highlighted
+    if (index < cardCount && !(cursorPos == 5 && cursorRow == 0)) {
+        switch (this->queue[index].data->GetClass()) {
+        case Battle::CardClass::mega:
+            custMegaCardOverlay.setPosition(custSprite.getPosition());
+            target.draw(custMegaCardOverlay, states);
+            break;
+        case Battle::CardClass::giga:
+            custGigaCardOverlay.setPosition(custSprite.getPosition());
+            target.draw(custGigaCardOverlay, states);
+            break;
+        case Battle::CardClass::dark:
+            custDarkCardOverlay.setPosition(custSprite.getPosition());
+            target.draw(custDarkCardOverlay, states);
+            break;
+        }
     }
 
-    icon.setPosition(offset + 2.f*(9.0f + ((i%5)*16.0f)), 2.f*(105.f + (row*24.0f)) );
-    icon.setTexture(Textures().LoadTextureFromFile("resources/cardicons/" + queue[i].data->GetShortName() + ".png"));
+    auto lastEmblemPos = emblem.getPosition();
+    emblem.setPosition(emblem.getPosition() + sf::Vector2f(offset, 0));
+    target.draw(emblem, states);
+    emblem.setPosition(lastEmblemPos);
+
+    float x = swoosh::ease::interpolate(static_cast<float>(frameElapsed * 25), offset + static_cast<float>((2.f * (16.0f + (cursorPos * 16.0f)))), cursorSmall.getPosition().x);
+    float y = swoosh::ease::interpolate(static_cast<float>(frameElapsed * 25), static_cast<float>(2.f * (113.f + (cursorRow * 24.f))), cursorSmall.getPosition().y);
+
+    cursorSmall.setPosition(x, y); // TODO: Make this relative to cust instead of screen. hint: scene nodes
+
+    int row = 0;
+    for (int i = 0; i < cardCount; i++) {
+        if (i > 4) {
+            row = 1;
+        }
+
+        icon.setPosition(offset + 2.f * (9.0f + ((i % 5) * 16.0f)), 2.f * (105.f + (row * 24.0f)));
+        icon.setTexture(Textures().LoadTextureFromFile("resources/cardicons/" + queue[i].data->GetShortName()+".png"));
+        icon.SetShader(nullptr);
+
+        if (queue[i].state == Bucket::state::voided) {
+            icon.SetShader(greyscale);
+            auto statesCopy = states;
+            statesCopy.shader = greyscale;
+
+            target.draw(icon, statesCopy);
+
+        }
+        else if (queue[i].state == Bucket::state::staged) {
+            target.draw(icon, states);
+        }
+
+        smCodeLabel.setPosition(offset + 2.f * (13.0f + ((i % 5) * 16.0f)), 2.f * (121.f + (row * 24.0f)));
+
+        char code = queue[i].data->GetCode();
+        smCodeLabel.SetString(code);
+        target.draw(smCodeLabel, states);
+    }
+
     icon.SetShader(nullptr);
 
-    if (queue[i].state == Bucket::state::voided) {
-      icon.SetShader(&greyscale);
-      auto statesCopy = states;
-        statesCopy.shader = &greyscale;
+    for (int i = 0; i < newSelectCount; i++) {
+        icon.setPosition(offset + 2 * 97.f, 2.f * (25.0f + (i * 16.0f)));
+        icon.setTexture(Textures().LoadTextureFromFile("resources/cardicons/" + (newSelectQueue[i]->data->GetShortName()) + ".png"));
 
-      target.draw(icon,statesCopy);
-
-    } else if (queue[i].state == Bucket::state::staged) {
-      target.draw(icon, states);
+        cardLock.setPosition(offset + 2 * 93.f, 2.f * (23.0f + (i * 16.0f)));
+        target.draw(cardLock, states);
+        target.draw(icon, states);
     }
 
-    smCodeLabel.setPosition(offset + 2.f*(13.0f + ((i % 5)*16.0f)), 2.f*(121.f + (row*24.0f)));
+    if ((cursorPos < 5 && cursorRow == 0) || (cursorPos < 3 && cursorRow == 1)) {
 
-    char code = queue[i].data->GetCode();
-    smCodeLabel.SetString(code);
-    target.draw(smCodeLabel, states);
-  }
+        if (cursorPos + (5 * cursorRow) < cardCount) {
+            // Draw the selected card card
+            cardCard.setTexture(Textures().LoadTextureFromFile("resources/cardimages/"+queue[cursorPos + (5*cursorRow)].data->GetShortName()+".png"));
 
-  icon.SetShader(nullptr);
+            auto lastPos = cardCard.getPosition();
+            cardCard.setPosition(sf::Vector2f(offset, 0) + cardCard.getPosition());
+            cardCard.SetShader(nullptr);
 
-  for (int i = 0; i < newSelectCount; i++) {
-    icon.setPosition(offset + 2 * 97.f, 2.f*(25.0f + (i*16.0f)));
-    icon.setTexture(Textures().LoadTextureFromFile("resources/cardicons/" + (*newSelectQueue[i]).data->GetShortName() + ".png"));
+            if (queue[cursorPos + (5 * cursorRow)].state == Bucket::state::voided) {
+                cardCard.SetShader(greyscale);
 
-    cardLock.setPosition(offset + 2 * 93.f, 2.f*(23.0f + (i*16.0f)));
-    target.draw(cardLock, states);
-    target.draw(icon, states);
-  }
+                auto statesCopy = states;
+                statesCopy.shader = greyscale;
 
-  if ((cursorPos < 5 && cursorRow == 0) || (cursorPos < 3 && cursorRow == 1)) {
+                target.draw(cardCard, statesCopy);
 
-    if (cursorPos + (5 * cursorRow) < cardCount) {
-      // Draw the selected card card
-      cardCard.setTexture(Textures().LoadTextureFromFile("resources/cardimages/" + queue[cursorPos + (5 * cursorRow)].data->GetShortName() + ".png"));
+            }
+            else {
+                target.draw(cardCard, states);
+            }
 
-      auto lastPos = cardCard.getPosition();
-      cardCard.setPosition(sf::Vector2f(offset, 0) + cardCard.getPosition());
-      cardCard.SetShader(nullptr);
+            cardCard.setPosition(lastPos);
 
-      if (queue[cursorPos + (5 * cursorRow)].state == Bucket::state::voided) {
-        cardCard.SetShader(&greyscale);
+            // card name font shadow
+            const std::string& shortname = queue[cursorPos + (5 * cursorRow)].data->GetShortName();
+            label.setPosition((offset + 2.f * 16.f) + 2.f, 22.f);
+            label.SetString(shortname);
+            label.SetColor(sf::Color(80, 75, 80));
+            target.draw(label, states);
 
-        auto statesCopy = states;
-        statesCopy.shader = &greyscale;
+            // card name font overlay
+            label.setPosition(offset + 2.f * 16.f, 20.f);
+            label.SetString(shortname);
+            label.SetColor(sf::Color::White);
+            target.draw(label, states);
 
-        target.draw(cardCard, statesCopy);
+            // the order here is very important:
+            if (queue[cursorPos + (5 * cursorRow)].data->GetDamage() > 0) {
+                label.SetString(std::to_string(queue[cursorPos + (5 * cursorRow)].data->GetDamage()));
+                label.setOrigin(label.GetLocalBounds().width + label.GetLocalBounds().left, 0);
+                label.setPosition((offset + 2.f * (70.f)) + 2.f, 152.f);
+                target.draw(label, states);
+            }
 
-      } else {
-        target.draw(cardCard, states);
-      }
+            label.setOrigin(0, 0);
+            label.setPosition(offset + 2.f * 16.f, 150.f);
+            label.SetString(std::string() + queue[cursorPos + (5 * cursorRow)].data->GetCode());
+            label.SetColor(sf::Color(253, 246, 71));
+            target.draw(label, states);
 
-      cardCard.setPosition(lastPos);
+            int elementID = (int)(queue[cursorPos + (5 * cursorRow)].data->GetElement());
 
-      // card name font shadow
-      const std::string& shortname = queue[cursorPos + (5 * cursorRow)].data->GetShortName();
-      label.setPosition((offset + 2.f * 16.f)+2.f, 22.f);
-      label.SetString(shortname);
-      label.SetColor(sf::Color(80, 75, 80));
-      target.draw(label, states);
+            auto elementRect = sf::IntRect(14 * elementID, 0, 14, 14);
+            element.setTextureRect(elementRect);
 
-      // card name font overlay
-      label.setPosition(offset + 2.f*16.f, 20.f);
-      label.SetString(shortname);
-      label.SetColor(sf::Color::White);
-      target.draw(label, states);
+            auto elementLastPos = element.getPosition();
+            element.setPosition(element.getPosition() + sf::Vector2f(offset, 0));
 
-      // the order here is very important:
-      if (queue[cursorPos + (5 * cursorRow)].data->GetDamage() > 0) {
-        label.SetString(std::to_string(queue[cursorPos + (5 * cursorRow)].data->GetDamage()));
-        label.setOrigin(label.GetLocalBounds().width+label.GetLocalBounds().left, 0);
-        label.setPosition((offset + 2.f*(70.f))+2.f, 152.f);
-        target.draw(label, states);
-      }
+            target.draw(element, states);
 
-      label.setOrigin(0, 0);
-      label.setPosition(offset + 2.f*16.f, 150.f);
-      label.SetString(std::string() + queue[cursorPos + (5 * cursorRow)].data->GetCode());
-      label.SetColor(sf::Color(253, 246, 71));
-      target.draw(label, states);
-
-      int elementID = (int)(queue[cursorPos + (5 * cursorRow)].data->GetElement());
-
-      auto elementRect = sf::IntRect(14 * elementID, 0, 14, 14);
-      element.setTextureRect(elementRect);
-
-      auto elementLastPos = element.getPosition();
-      element.setPosition(element.getPosition() + sf::Vector2f(offset, 0));
-
-      target.draw(element, states);
-
-      element.setPosition(elementLastPos);
-    }
-    else {
-      auto cardNoDataLastPos = cardNoData.getPosition();
-      cardNoData.setPosition(cardNoData.getPosition() + sf::Vector2f(offset, 0));
-      target.draw(cardNoData, states);
-      cardNoData.setPosition(cardNoDataLastPos);
-    }
-
-    // Draw the small cursor
-    if (!isInFormSelect) {
-      target.draw(cursorSmall, states);
-    }
-  }
-  else {
-    auto cardSendDataLastPos = cardSendData.getPosition();
-    cardSendData.setPosition(cardSendData.getPosition() + sf::Vector2f(offset, 0));
-    target.draw(cardSendData, states);
-    cardSendData.setPosition(cardSendDataLastPos);
-
-    auto cursorBigLastPos = cursorBig.getPosition();
-    cursorBig.setPosition(cursorBig.getPosition() + sf::Vector2f(offset, 0));
-    target.draw(cursorBig, states);
-    cursorBig.setPosition(cursorBigLastPos);
-  }
-
-  if (formUI.size()) {
-    target.draw(formSelect, states);
-  }
-
-  // find out if we're in view (IsInView() is non-const qualified...)
-  float bounds = custSprite.getTextureRect().width * 2.f;
-
-  if (getPosition().x == bounds) {
-    // Fade in a screen-wide shadow beneath the card if it is a dark card
-    sf::RectangleShape screen(target.getView().getSize());
-    screen.setFillColor(sf::Color(0, 0, 0, static_cast<sf::Uint8>(darkCardShadowAlpha * 255)));
-    target.draw(screen);
-  }
-
-  // draw the dark card in on top of it so it looks brighter
-  if (isDarkCardSelected) {
-    auto lastPos = cardCard.getPosition();
-    cardCard.setPosition(sf::Vector2f(offset, 0) + cardCard.getPosition());
-    target.draw(cardCard, states);
-    cardCard.setPosition(lastPos);
-  }
-
-  if (isInFormSelect) {
-    if (formSelectAnimator.GetAnimationString() == "OPEN") {
-      int i = 0;
-      auto offset = -custSprite.getTextureRect().width*2.f; // TODO: this will be uneccessary once we use AddNode() for all rendered items below
-
-      for (sf::Sprite f : formUI) {
-        formItemBG.setPosition(offset + 16.f, 16.f + float(i*32.0f));
-        target.draw(formItemBG, states);
-
-        f.setPosition(offset + 16.f, 16.f + float(i*32.0f));
-
-        if (i != selectedFormRow && i != formCursorRow && selectedFormRow > -1) {
-          auto greyscaleState = states;
-          greyscaleState.shader = handle.Shaders().GetShader(ShaderType::GREYSCALE);
-          target.draw(f, greyscaleState);
-        }
-        else if (i == selectedFormRow && selectedFormRow > -1) {
-          auto aquaMarineState = states;
-          aquaMarineState.shader = handle.Shaders().GetShader(ShaderType::COLORIZE);
-          f.setColor(sf::Color(127,255,212));
-          target.draw(f, aquaMarineState);
-          f.setColor(sf::Color::White); // back to normal after draw to texture
+            element.setPosition(elementLastPos);
         }
         else {
-          // normal color
-          target.draw(f, states);
+            auto cardNoDataLastPos = cardNoData.getPosition();
+            cardNoData.setPosition(cardNoData.getPosition() + sf::Vector2f(offset, 0));
+            target.draw(cardNoData, states);
+            cardNoData.setPosition(cardNoDataLastPos);
         }
 
-        i++;
-      }
-
-      // Draw cursor only if not flashing the screen
-      if (formSelectQuitTimer <= 0.f) {
-        target.draw(formCursor, states);
-      }
+        // Draw the small cursor
+        if (!isInFormSelect) {
+            target.draw(cursorSmall, states);
+        }
     }
-  }
+    else {
+        auto cardSendDataLastPos = cardSendData.getPosition();
+        cardSendData.setPosition(cardSendData.getPosition() + sf::Vector2f(offset, 0));
+        target.draw(cardSendData, states);
+        cardSendData.setPosition(cardSendDataLastPos);
 
-  target.draw(textbox);
+        auto cursorBigLastPos = cursorBig.getPosition();
+        cursorBig.setPosition(cursorBig.getPosition() + sf::Vector2f(offset, 0));
+        target.draw(cursorBig, states);
+        cursorBig.setPosition(cursorBigLastPos);
+    }
 
-  SceneNode::draw(target, states);
+    if (formUI.size()) {
+        target.draw(formSelect, states);
+    }
 
-  // Reveal the new form icon in the HUD after the flash
-  if (formSelectQuitTimer <= seconds_cast<float>(frames(10))) {
-    auto rect = currentFormItem.getTextureRect();
-    currentFormItem.setTextureRect(sf::IntRect(rect.left, rect.top, 30, 14));
-    currentFormItem.setPosition(sf::Vector2f(4, 36.f));
-    target.draw(currentFormItem, states);
-    currentFormItem.setTextureRect(rect);
-  }
+    // find out if we're in view (IsInView() is non-const qualified...)
+    float bounds = custSprite.getTextureRect().width * 2.f;
 
-  // draw the white flash
-  if (isInFormSelect && formSelectQuitTimer <= seconds_cast<float>(frames(20))) {
-    auto delta = swoosh::ease::wideParabola(formSelectQuitTimer, seconds_cast<double>(frames(20)), 1.0);
-    const auto& view = target.getView();
-    sf::RectangleShape screen(view.getSize());
-    screen.setFillColor(sf::Color(255, 255, 255, static_cast<sf::Uint8>(delta * 255.0)));
-    target.draw(screen, sf::RenderStates::Default);
-  }
+    if (getPosition().x == bounds) {
+        // Fade in a screen-wide shadow beneath the card if it is a dark card
+        sf::RectangleShape screen(target.getView().getSize());
+        screen.setFillColor(sf::Color(0, 0, 0, static_cast<sf::Uint8>(darkCardShadowAlpha * 255)));
+        target.draw(screen);
+    }
+
+    // draw the dark card in on top of it so it looks brighter
+    if (isDarkCardSelected) {
+        auto lastPos = cardCard.getPosition();
+        cardCard.setPosition(sf::Vector2f(offset, 0) + cardCard.getPosition());
+        target.draw(cardCard, states);
+        cardCard.setPosition(lastPos);
+    }
+
+    if (isInFormSelect) {
+        if (formSelectAnimator.GetAnimationString() == "OPEN") {
+            int i = 0;
+            auto offset = -custSprite.getTextureRect().width * 2.f; // TODO: this will be uneccessary once we use AddNode() for all rendered items below
+
+            for (sf::Sprite f : formUI) {
+                formItemBG.setPosition(offset + 16.f, 16.f + float(i * 32.0f));
+                target.draw(formItemBG, states);
+
+                f.setPosition(offset + 16.f, 16.f + float(i * 32.0f));
+
+                if (i != selectedFormRow && i != formCursorRow && selectedFormRow > -1) {
+                    auto greyscaleState = states;
+                    greyscaleState.shader = handle.Shaders().GetShader(ShaderType::GREYSCALE);
+                    target.draw(f, greyscaleState);
+                }
+                else if (i == selectedFormRow && selectedFormRow > -1) {
+                    auto aquaMarineState = states;
+                    aquaMarineState.shader = handle.Shaders().GetShader(ShaderType::COLORIZE);
+                    f.setColor(sf::Color(127, 255, 212));
+                    target.draw(f, aquaMarineState);
+                    f.setColor(sf::Color::White); // back to normal after draw to texture
+                }
+                else {
+                    // normal color
+                    target.draw(f, states);
+                }
+
+                i++;
+            }
+
+            // Draw cursor only if not flashing the screen
+            if (formSelectQuitTimer <= 0.f) {
+                target.draw(formCursor, states);
+            }
+        }
+    }
+
+    target.draw(textbox);
+
+    SceneNode::draw(target, states);
+
+    // Reveal the new form icon in the HUD after the flash
+    if (formSelectQuitTimer <= seconds_cast<float>(frames(10))) {
+        auto rect = currentFormItem.getTextureRect();
+        currentFormItem.setTextureRect(sf::IntRect(rect.left, rect.top, 30, 14));
+        currentFormItem.setPosition(sf::Vector2f(4, 36.f));
+        target.draw(currentFormItem, states);
+        currentFormItem.setTextureRect(rect);
+    }
+
+    // draw the white flash
+    if (isInFormSelect && formSelectQuitTimer <= seconds_cast<float>(frames(20))) {
+        auto delta = swoosh::ease::wideParabola(formSelectQuitTimer, seconds_cast<double>(frames(20)), 1.0);
+        const auto& view = target.getView();
+        sf::RectangleShape screen(view.getSize());
+        screen.setFillColor(sf::Color(255, 255, 255, static_cast<sf::Uint8>(delta * 255.0)));
+        target.draw(screen, sf::RenderStates::Default);
+    }
 }
 
 void CardSelectionCust::Update(double elapsed)
 {
-  if (IsHidden()) {
-    canInteract = false;
-    isDarkCardSelected = false;
-    darkCardShadowAlpha = 0.f;
-    return;
-  }
+    if (IsHidden()) {
+        canInteract = false;
+        isDarkCardSelected = false;
+        darkCardShadowAlpha = 0.f;
+        return;
+    }
 
-  canInteract = true; // assume we can interact unless another flag says otherwise
+    canInteract = true; // assume we can interact unless another flag says otherwise
 
-  frameElapsed = (double)elapsed;
+    frameElapsed = (double)elapsed;
 
-  if (!IsInView()) {
-    darkCardShadowAlpha = 0.0f;
-    isDarkCardSelected = false;
-  }
-  else {
-    if (isDarkCardSelected) {
-      darkCardShadowAlpha = std::min(darkCardShadowAlpha + static_cast<float>(elapsed), 0.3f);
+    if (!IsInView()) {
+        darkCardShadowAlpha = 0.0f;
+        isDarkCardSelected = false;
     }
     else {
-      darkCardShadowAlpha = std::max(darkCardShadowAlpha - static_cast<float>(elapsed), 0.0f);
+        if (isDarkCardSelected) {
+            darkCardShadowAlpha = std::min(darkCardShadowAlpha + static_cast<float>(elapsed), 0.3f);
+        }
+        else {
+            darkCardShadowAlpha = std::max(darkCardShadowAlpha - static_cast<float>(elapsed), 0.0f);
+        }
     }
-  }
 
-  cursorSmallAnimator.Update(elapsed, cursorSmall);
-  cursorBigAnimator.Update(elapsed, cursorBig);
+    cursorSmallAnimator.Update(elapsed, cursorSmall);
+    cursorBigAnimator.Update(elapsed, cursorBig);
 
-  textbox.Update(elapsed);
+    textbox.Update(elapsed);
 
-  emblem.Update(elapsed);
+    emblem.Update(elapsed);
 
-  formCursorAnimator.Update(elapsed, formCursor.getSprite());
-  formSelectAnimator.Update(elapsed, formSelect.getSprite());
+    formCursorAnimator.Update(elapsed, formCursor.getSprite());
+    formSelectAnimator.Update(elapsed, formSelect.getSprite());
 
-  auto offset = -custSprite.getTextureRect().width*2.f; // TODO: this will be uneccessary once we use AddNode() for all rendered items...
+    auto offset = -custSprite.getTextureRect().width * 2.f; // TODO: this will be uneccessary once we use AddNode() for all rendered items...
 
-  formCursor.setPosition(offset + 16.f, 12.f + float(formCursorRow*32.f));
-  formSelect.setPosition(offset + 88.f, 194.f);
+    formCursor.setPosition(offset + 16.f, 12.f + float(formCursorRow * 32.f));
+    formSelect.setPosition(offset + 88.f, 194.f);
 
-  if (isInFormSelect && formSelectQuitTimer > 0.f) {
-    canInteract = false;
+    if (isInFormSelect && formSelectQuitTimer > 0.f) {
+        canInteract = false;
 
-    formSelectQuitTimer -= elapsed;
+        formSelectQuitTimer -= elapsed;
 
-    if (formSelectQuitTimer <= 0.f) {
-      canInteract = true;
-      isInFormSelect = false;
-      playFormSound = false;
+        if (formSelectQuitTimer <= 0.f) {
+            canInteract = true;
+            isInFormSelect = false;
+            playFormSound = false;
+        }
+        else if (formSelectQuitTimer <= seconds_cast<float>(frames(10))) {
+            formSelectAnimator.SetAnimation("CLOSED");
+            cursorPos = cursorRow = formCursorRow = 0;
+            if (!playFormSound) {
+                playFormSound = true;
+                Audio().Play(AudioType::PA_ADVANCE, AudioPriority::highest);
+            }
+        }
     }
-    else if (formSelectQuitTimer <= seconds_cast<float>(frames(10))) {
-      formSelectAnimator.SetAnimation("CLOSED");
-      cursorPos = cursorRow = formCursorRow = 0;
-      if (!playFormSound) {
-        playFormSound = true;
-        Audio().Play(AudioType::PA_ADVANCE, AudioPriority::highest);
-      }
-    }
-  }
 
-  if (cardCount > 0) {
-    // If OK button is highlighted, we are not selecting a dark card
-    // If we are in form select, we are not selecting a dark card
-    if ((cursorRow == 0 && cursorPos == 5) || isInFormSelect) {
-      isDarkCardSelected = false;
+    if (cardCount > 0) {
+        // If OK button is highlighted, we are not selecting a dark card
+        // If we are in form select, we are not selecting a dark card
+        if ((cursorRow == 0 && cursorPos == 5) || isInFormSelect) {
+            isDarkCardSelected = false;
+        }
+        else {
+            // Otherwise check if we are highlighting a dark card
+            int index = cursorPos + (5 * cursorRow);
+            isDarkCardSelected = this->queue[index].data && this->queue[index].data->GetClass() == Battle::CardClass::dark;
+        }
     }
-    else {
-      // Otherwise check if we are highlighting a dark card
-      int index = cursorPos + (5 * cursorRow);
-      isDarkCardSelected = this->queue[index].data && this->queue[index].data->GetClass() == Battle::CardClass::dark;
-    }
-  }
 
-  isInView = IsInView();
+    isInView = IsInView();
 }
 
 Battle::Card** CardSelectionCust::GetCards() {
-  if (newSelectCount != 0) {
-    // Allocate selected cards list
-    size_t sz = sizeof(Battle::Card*) * newSelectCount;
+    if (newSelectCount != 0) {
+        // Allocate selected cards list
+        size_t sz = sizeof(Battle::Card*) * newSelectCount;
 
-    free(selectedCards);
+        free(selectedCards);
 
-    selectedCards = (Battle::Card**)malloc(sz);
+        selectedCards = (Battle::Card**)malloc(sz);
 
-    // Point to selected queue
-    for (int i = 0; i < newSelectCount; i++) {
-      selectedCards[i] = new Battle::Card(*newSelectQueue[i]->data);
+        // Point to selected queue
+        for (int i = 0; i < newSelectCount; i++) {
+            selectedCards[i] = new Battle::Card(*newSelectQueue[i]->data);
+        }
+
+        selectCount = newSelectCount;
+
+        ClearCards(); // prepare for next selection
     }
 
-    selectCount = newSelectCount;
-
-    ClearCards(); // prepare for next selection
-  }
-
-  return selectedCards;
+    return selectedCards;
 }
 
 bool CardSelectionCust::HasNewHand() const
@@ -1021,62 +1021,62 @@ bool CardSelectionCust::HasNewHand() const
 }
 
 void CardSelectionCust::ClearCards() {
-  if (areCardsReady) {
-    for (int i = 0; i < newSelectCount; i++) {
-      newSelectQueue[i]->data = nullptr;
+    if (areCardsReady) {
+        for (int i = 0; i < newSelectCount; i++) {
+            newSelectQueue[i]->data = nullptr;
+        }
     }
-  }
 
-  // Restructure queue
-  // Line up all non-null buckets consecutively
-  // Reset bucket state to STAGED
-  for (int i = 0; i < cardCount; i++) {
-    queue[i].state = Bucket::state::staged;
-    int next = i;
-    while (!queue[i].data && next + 1 < cardCount) {
-      queue[i].data = queue[next + 1].data;
-      queue[next + 1].data = nullptr;
-      next++;
+    // Restructure queue
+    // Line up all non-null buckets consecutively
+    // Reset bucket state to STAGED
+    for (int i = 0; i < cardCount; i++) {
+        queue[i].state = Bucket::state::staged;
+        int next = i;
+        while (!queue[i].data && next + 1 < cardCount) {
+            queue[i].data = queue[next + 1].data;
+            queue[next + 1].data = nullptr;
+            next++;
+        }
     }
-  }
 
-  cardCount = cardCount - newSelectCount;
-  newSelectCount = 0;
+    cardCount = cardCount - newSelectCount;
+    newSelectCount = 0;
 }
 
 const int CardSelectionCust::GetCardCount() {
-  return selectCount;
+    return selectCount;
 }
 
 const int CardSelectionCust::GetSelectedFormIndex()
 {
-  return selectedFormIndex;
+    return selectedFormIndex;
 }
 
 const bool CardSelectionCust::SelectedNewForm()
 {
-  return (selectedFormIndex != -1);
+    return (selectedFormIndex != -1);
 }
 
 const bool CardSelectionCust::CanInteract()
 {
-  return canInteract;
+    return canInteract;
 }
 
 const bool CardSelectionCust::RequestedRetreat()
 {
-  return textbox.RequestedRetreat();
+    return textbox.RequestedRetreat();
 }
 
 void CardSelectionCust::ResetState() {
-  cursorPos = formCursorRow = 0;
-  areCardsReady = false;
-  isInFormSelect = false;
-  newHand = false;
-  SetSelectedFormIndex(lockedInFormIndex);
-  textbox.Reset();
+    cursorPos = formCursorRow = 0;
+    areCardsReady = false;
+    isInFormSelect = false;
+    newHand = false;
+    SetSelectedFormIndex(lockedInFormIndex);
+    textbox.Reset();
 }
 
 bool CardSelectionCust::AreCardsReady() {
-  return areCardsReady;
+    return areCardsReady;
 }
