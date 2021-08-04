@@ -73,8 +73,64 @@ Overworld::SceneBase::SceneBase(swoosh::ActivityController& controller) :
     time(Font::Style::thick),
     playerActor(std::make_shared<Overworld::Actor>("You"))
 {
+<<<<<<< HEAD
     // Draws the scrolling background
     SetBackground(std::make_shared<LanBackground>());
+=======
+  // When we reach the menu scene we need to load the player information
+  // before proceeding to next sub menus
+  webAccountIcon.setTexture(LOAD_TEXTURE(WEBACCOUNT_STATUS));
+  webAccountIcon.setScale(2.f, 2.f);
+  webAccountIcon.setPosition(4, getController().getVirtualWindowSize().y - 44.0f);
+  webAccountAnimator = Animation("resources/ui/webaccount_icon.animation");
+  webAccountAnimator.Load();
+  webAccountAnimator.SetAnimation("NO_CONNECTION");
+
+  // Draws the scrolling background
+  SetBackground(std::make_shared<LanBackground>());
+
+  // set the missing texture for all actor objects
+  auto missingTexture = Textures().LoadTextureFromFile("resources/ow/missing.png");
+  Overworld::Actor::SetMissingTexture(missingTexture);
+
+  personalMenu.setScale(2.f, 2.f);
+  //emote.setScale(2.f, 2.f);
+
+  gotoNextScene = true;
+
+  /// WEB ACCOUNT LOADING
+
+  WebAccounts::AccountState account;
+
+  if (WEBCLIENT.IsLoggedIn()) {
+    bool loaded = WEBCLIENT.LoadSession("profile.bin", &account);
+
+    // Quickly load the session on disk to reduce wait times
+    if (loaded) {
+      Logger::Log("Found cached account data");
+
+      WEBCLIENT.UseCachedAccount(account);
+      WEBCLIENT.CacheTextureData(account);
+      folders = CardFolderCollection::ReadFromWebAccount(account);
+      programAdvance = PA::ReadFromWebAccount(account);
+
+      NaviEquipSelectedFolder();
+    }
+
+    Logger::Log("Fetching account data...");
+
+    // resent fetch command to get the a latest account info
+    accountCommandResponse = WEBCLIENT.SendFetchAccountCommand();
+
+    Logger::Log("waiting for server...");
+  }
+  else {
+
+    // If we are not actively online but we have a profile on disk, try to load our previous session
+    // The user may be logging in but has not completed yet and we want to reduce wait times...
+    // Otherwise, use the guest profile
+    bool loaded = WEBCLIENT.LoadSession("profile.bin", &account) || WEBCLIENT.LoadSession("guest.bin", &account);
+>>>>>>> development
 
     // set the missing texture for all actor objects
     auto missingTexture = Textures().LoadTextureFromFile("resources/ow/missing.png");
@@ -82,9 +138,17 @@ Overworld::SceneBase::SceneBase(swoosh::ActivityController& controller) :
 
     personalMenu.setScale(2.f, 2.f);
 
+<<<<<<< HEAD
     gotoNextScene = true;
 
     setView(sf::Vector2u(480, 320));
+=======
+  setView(sf::Vector2u(480, 320));
+
+  // Spawn overworld player
+  playerActor->setPosition(200, 20);
+  playerActor->SetCollisionRadius(4);
+>>>>>>> development
 
     // Spawn overworld player
     playerActor->setPosition(200, 20);
@@ -93,11 +157,17 @@ Overworld::SceneBase::SceneBase(swoosh::ActivityController& controller) :
     AddActor(playerActor);
     AddSprite(teleportController.GetBeam());
 
+<<<<<<< HEAD
     map.setScale(2.f, 2.f);
 
     // clock
     time.setPosition(480 - 4.f, 6.f);
     time.setScale(2.f, 2.f);
+=======
+  // clock
+  time.setPosition(480 - 4.f, 6.f);
+  time.setScale(2.f, 2.f);
+>>>>>>> development
 }
 
 void Overworld::SceneBase::onStart() {
@@ -222,6 +292,7 @@ void Overworld::SceneBase::onUpdate(double elapsed) {
             });
     }
 
+<<<<<<< HEAD
     // Loop the bg
     bg->Update((float)elapsed);
 
@@ -230,6 +301,10 @@ void Overworld::SceneBase::onUpdate(double elapsed) {
 
     // Update the textbox
     menuSystem.Update((float)elapsed);
+=======
+  // Update the textbox
+  menuSystem.Update((float)elapsed);
+>>>>>>> development
 
     HandleCamera((float)elapsed);
 
@@ -305,6 +380,7 @@ void Overworld::SceneBase::HandleInput() {
         return;
     }
 
+<<<<<<< HEAD
     // check to see if talk button was pressed
     if (!IsInputLocked()) {
         if (Input().Has(InputEvents::pressed_interact)) {
@@ -318,11 +394,40 @@ void Overworld::SceneBase::HandleInput() {
     if (Input().Has(InputEvents::pressed_pause) && !Input().Has(InputEvents::pressed_cancel)) {
         personalMenu.Open();
         Audio().Play(AudioType::CHIP_DESC);
+=======
+  if (!menuSystem.IsClosed()) {
+    menuSystem.HandleInput(Input(), getController().getWindow());
+    return;
+  }
+
+  if (!personalMenu.IsClosed()) {
+    personalMenu.HandleInput(Input(), Audio());
+    return;
+  }
+
+  // check to see if talk button was pressed
+  if (!IsInputLocked()) {
+    if (Input().Has(InputEvents::pressed_interact)) {
+      OnInteract(Interaction::action);
+>>>>>>> development
     }
     else if (Input().Has(InputEvents::pressed_map)) {
         showMinimap = true;
         minimap.ResetPanning();
     }
+<<<<<<< HEAD
+=======
+  }
+
+  if (Input().Has(InputEvents::pressed_pause) && !Input().Has(InputEvents::pressed_cancel)) {
+    personalMenu.Open();
+    Audio().Play(AudioType::CHIP_DESC);
+  }
+  else if (Input().Has(InputEvents::pressed_map)) {
+    showMinimap = true;
+    minimap.ResetPanning();
+  }
+>>>>>>> development
 }
 
 void Overworld::SceneBase::onLeave() {
@@ -401,7 +506,11 @@ void Overworld::SceneBase::onDraw(sf::RenderTexture& surface) {
 
     DrawWorld(surface, sf::RenderStates::Default);
 
+<<<<<<< HEAD
     surface.draw(personalMenu);
+=======
+  surface.draw(personalMenu);
+>>>>>>> development
 
     // Add the web account connection symbol
     surface.draw(webAccountIcon);
@@ -597,6 +706,7 @@ void Overworld::SceneBase::RefreshNaviSprite()
     // If coming back from navi select, the navi has changed, update it
     const auto& owPath = meta.GetOverworldAnimationPath();
 
+<<<<<<< HEAD
     if (owPath.size()) {
         if (auto tex = Textures().LoadTextureFromFile(meta.GetOverworldTexturePath())) {
             playerActor->setTexture(tex);
@@ -604,6 +714,15 @@ void Overworld::SceneBase::RefreshNaviSprite()
         playerActor->LoadAnimations(owPath);
 
         auto iconTexture = meta.GetIconTexture();
+=======
+  if (owPath.size()) {
+    if (auto tex = Textures().LoadTextureFromFile(meta.GetOverworldTexturePath())) {
+      playerActor->setTexture(tex);
+    }
+    playerActor->LoadAnimations(owPath);
+
+    auto iconTexture = meta.GetIconTexture();
+>>>>>>> development
 
         if (iconTexture) {
             personalMenu.UseIconTexture(iconTexture);
@@ -943,7 +1062,11 @@ Overworld::TeleportController& Overworld::SceneBase::GetTeleportController()
 
 SelectedNavi& Overworld::SceneBase::GetCurrentNavi()
 {
+<<<<<<< HEAD
     return currentNavi;
+=======
+  return currentNavi;
+>>>>>>> development
 }
 
 std::shared_ptr<Background> Overworld::SceneBase::GetBackground()
@@ -968,7 +1091,11 @@ std::optional<CardFolder*> Overworld::SceneBase::GetSelectedFolder() {
 
 Overworld::MenuSystem& Overworld::SceneBase::GetMenuSystem()
 {
+<<<<<<< HEAD
     return menuSystem;
+=======
+  return menuSystem;
+>>>>>>> development
 }
 
 void Overworld::SceneBase::AddItem(const std::string& id, const std::string& name, const std::string& description)

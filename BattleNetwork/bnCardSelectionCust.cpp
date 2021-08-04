@@ -423,7 +423,10 @@ bool CardSelectionCust::CursorCancel() {
         currentFormItem.setTexture(*previousFormItem.getTexture());
         SetSelectedFormIndex(previousFormIndex);
         selectedFormRow = -1;
+<<<<<<< HEAD
         
+=======
+>>>>>>> development
     }
     // This is also where beastout card would be removed from queue
     // when beastout is available
@@ -639,6 +642,7 @@ void CardSelectionCust::SetPlayerFormOptions(const std::vector<PlayerFormMeta*> 
 void CardSelectionCust::ResetPlayerFormSelection()
 {
   SetSelectedFormIndex(-1);
+  selectedFormRow = -1;
   lockedInFormIndex = selectedFormIndex;
   lockedInFormItem = currentFormItem = sf::Sprite();
 }
