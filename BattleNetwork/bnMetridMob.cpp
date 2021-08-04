@@ -24,9 +24,6 @@ Mob* MetridMob::Build() {
   // 2 - highest metrids, lava tiles, and holes
   Mob* mob = new Mob(field);
 
-  mob->RegisterRankedReward(1, BattleItem(WEBCLIENT.MakeBattleCardFromWebCardData(BuiltInCards::ElecPulse_B)));
-  mob->RegisterRankedReward(5, BattleItem(WEBCLIENT.MakeBattleCardFromWebCardData(BuiltInCards::Recov3000_WILD)));
-
   if (mobType == 0) {
 
     Battle::Tile* tile = field->GetAt(4, 2);

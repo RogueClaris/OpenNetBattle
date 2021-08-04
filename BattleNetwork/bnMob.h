@@ -107,6 +107,8 @@ public:
    * @return Field*
    */
   Field* GetField();
+  
+  void SetField(Field* fieldToSet);
 
   /**
    * @brief Get the count of enemies in battle

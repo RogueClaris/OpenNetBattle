@@ -1,11 +1,13 @@
 #pragma once
 #include "bnOverworldSceneBase.h"
+#include "bnOverworldHomepage.h"
 #include "bnOverworldActorPropertyAnimator.h"
+#include "../bnCardFolderCollection.h"
 #include "../bnCardLibrary.h"
 #include "../bnPA.h"
 
 namespace Overworld {
-  class GameArea final : public SceneBase {
+  class GameArea final : public Homepage {
   private:
     bool scaledmap{ false }, clicked{ false };
     bool infocus{ false };
@@ -18,11 +20,12 @@ namespace Overworld {
     bool positionIsInWarp(sf::Vector3f position);
     ActorPropertyAnimator propertyAnimator;
     bool goToBattle = false;
+    bool isLoad = false;
   public:
     /**
      * @brief Loads the player's library data and loads graphics
      */
-    GameArea(swoosh::ActivityController&, const std::string& mapPath, sf::Vector3f entryPos, const Direction mapDirection);
+    GameArea(swoosh::ActivityController&, const std::string& mapPath, sf::Vector3f entryPos, const Direction mapDirection, bool isLoad);
     ~GameArea();
 
     void onUpdate(double elapsed) override;

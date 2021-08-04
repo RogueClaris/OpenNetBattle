@@ -3,7 +3,6 @@
 #include "bnTextureResourceManager.h"
 #include "bnShaderResourceManager.h"
 #include "bnInputManager.h"
-#include "bnWebClientMananger.h"
 #include "bnCardLibrary.h"
 
 #define WILDCARD '*'
@@ -711,7 +710,7 @@ void CardSelectionCust::draw(sf::RenderTarget & target, sf::RenderStates states)
     }
 
     icon.setPosition(offset + 2.f*(9.0f + ((i%5)*16.0f)), 2.f*(105.f + (row*24.0f)) );
-    icon.setTexture(WEBCLIENT.GetIconForCard(queue[i].data->GetUUID()));
+    icon.setTexture(Textures().LoadTextureFromFile("resources/cardicons/" + queue[i].data->GetShortName() + ".png"));
     icon.SetShader(nullptr);
 
     if (queue[i].state == Bucket::state::voided) {
@@ -736,7 +735,7 @@ void CardSelectionCust::draw(sf::RenderTarget & target, sf::RenderStates states)
 
   for (int i = 0; i < newSelectCount; i++) {
     icon.setPosition(offset + 2 * 97.f, 2.f*(25.0f + (i*16.0f)));
-    icon.setTexture(WEBCLIENT.GetIconForCard((*newSelectQueue[i]).data->GetUUID()));
+    icon.setTexture(Textures().LoadTextureFromFile("resources/cardicons/" + (*newSelectQueue[i]).data->GetShortName() + ".png"));
 
     cardLock.setPosition(offset + 2 * 93.f, 2.f*(23.0f + (i*16.0f)));
     target.draw(cardLock, states);
@@ -747,7 +746,7 @@ void CardSelectionCust::draw(sf::RenderTarget & target, sf::RenderStates states)
 
     if (cursorPos + (5 * cursorRow) < cardCount) {
       // Draw the selected card card
-      cardCard.setTexture(WEBCLIENT.GetImageForCard(queue[cursorPos+(5*cursorRow)].data->GetUUID()));
+      cardCard.setTexture(Textures().LoadTextureFromFile("resources/cardimages/" + queue[cursorPos + (5 * cursorRow)].data->GetShortName() + ".png"));
 
       auto lastPos = cardCard.getPosition();
       cardCard.setPosition(sf::Vector2f(offset, 0) + cardCard.getPosition());

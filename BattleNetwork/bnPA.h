@@ -21,32 +21,29 @@
 
 class PA
 {
-private: 
+public: 
   struct StepType {
-    std::string id;
-    std::string name;
-    char code;
+      std::string id;
+      std::string name;
+      char code;
   }; /*!< Name of card and code */
 
-public: 
   typedef std::vector<StepType> Steps;         /*!< List of steps for a PA*/
-
-private:
   /*! \class PAData
-   *  \desc Describes the PA card and what steps it needs */
+    *  \desc Describes the PA card and what steps it needs */
   struct PAData {
-    std::string name; /*!< name of PA*/
-    std::string uuid; /*!< UUID of PA*/
-    std::string action{ "IDLE" }; /*!< Action this PA invokes*/
-    int damage{ 0 };  /*!< damage of the PA*/
-    Element primaryElement{ Element::none };/*!< element of the PA*/
-    Element secondElement{ Element::none }; /*!< Secondary (hidden) element of PA*/
-    bool canBoost{ false }; /*!< true if damage > 0*/
-    bool timeFreeze{ false }; /*!< Triggers time freeze if true */
-    std::vector<std::string> metaClasses; /*!< User-created class types*/
-    PA::Steps steps; /*!< list of steps for PA */
+      std::string name; /*!< name of PA*/
+      std::string uuid; /*!< UUID of PA*/
+      std::string action{ "IDLE" }; /*!< Action this PA invokes*/
+      int damage{ 0 };  /*!< damage of the PA*/
+      Element primaryElement{ Element::none };/*!< element of the PA*/
+      Element secondElement{ Element::none }; /*!< Secondary (hidden) element of PA*/
+      bool canBoost{ false }; /*!< true if damage > 0*/
+      bool timeFreeze{ false }; /*!< Triggers time freeze if true */
+      std::vector<std::string> metaClasses; /*!< User-created class types*/
+      PA::Steps steps; /*!< list of steps for PA */
   };
-
+private:
   std::vector<PAData> advances; /*!< list of all PAs */
   std::vector<PAData>::iterator iter; /*!< iterator */
   Battle::Card* advanceCardRef; /*!< Allocated PA needs to be deleted */

@@ -46,16 +46,6 @@ public:
     return -1;
   }
 
-  CardFolder* GetEquippedFolder() {
-      for (const auto& [key, value] : collection) {
-          if (collection.at(key)->equipped && collection.at(key)->GetSize() == 30) {
-              return collection.at(key);
-          }
-      }
-      auto folder = new CardFolder();
-      return folder;
-  }
-
   /**
    * @brief Creates a folder with the give name
    * @param name of the new folder
@@ -245,35 +235,6 @@ public:
   static CardFolderCollection ReadFromWebAccount(const WebAccounts::AccountState& account) {
       CardFolderCollection collection;
       CardFolder* currFolder = nullptr;
-
-      for(auto&& folder : account.folders) {  
-        string title = folder.first;
-
-        if (collection.HasFolder(title)) {
-            if (!collection.GetFolder(title, currFolder)) {
-                Logger::Log("Failed to get folder " + title);
-            }
-        }
-        else {
-            // 10 chars fit on the box 
-            title = title.substr(0, 10);
-
-            Logger::Logf("making folder %s", title.c_str());
-            Logger::Logf("folder status: %i", (int)(collection.MakeFolder(title)));
-            Logger::Logf("retrieved folder: %i", (int)collection.GetFolder(title, currFolder));
-        }
-
-        for (auto&& uuid : folder.second->cards) {
-            auto cardIter = account.cards.find(uuid);
-
-            if (cardIter != account.cards.end()) {
-                Battle::Card card = WEBCLIENT.MakeBattleCardFromWebCardData(*cardIter->second);
-                currFolder->AddCard(card);
-            }
-        }
-        
-        currFolder->SetErrors(folder.second->errors);
-      }
 
       return collection;
   }

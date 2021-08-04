@@ -58,11 +58,6 @@ TitleScene::TitleScene(swoosh::ActivityController& controller, TaskGroup&& tasks
   startLabel.SetString("Loading, Please Wait");
   CenterLabel();
 
-  ConfigSettings config = Input().GetConfigSettings();
-  WebServerInfo web = config.GetWebServerInfo();
-  WEBCLIENT.ConnectToWebServer(web.version.c_str(), web.URL.c_str(), web.port);
-  loginResult = WEBCLIENT.SendLoginCommand(web.user, web.password);
-
   setView(sf::Vector2u(480, 320));
 }
 
@@ -100,48 +95,49 @@ void TitleScene::onUpdate(double elapsed)
       Poll();
 
       return;
-    } else if (loginResult.valid() && !is_ready(loginResult)) {
-      startLabel.SetString("Loggin in...");
-      CenterLabel();
-      return;
     }
     else {
 #if defined(__ANDROID__)
-      startLabel.SetString("TAP SCREEN");
+    if (!loginSelected) {
+        loginSelected = true;
+        startLabel.SetString("TAP SCREEN");
+    }
 #else
-      startLabel.SetString("PRESS START");
-      CenterLabel();
+    if (!loginSelected){
+        loginSelected = true;
+        startLabel.SetString("PRESS START");
+        CenterLabel();
+    }
 #endif
     }
 
-    static bool doOnce = true;
-
-    //if (doOnce) {
-    //  doOnce = false;
-
-    //  if (loginResult.valid()) {
-    //    if (loginResult.get()) {
-    //      Logger::Logf("Logged in successfully!");
-    //    }
-    //    else {
-    //      Logger::Logf("Could not log in!");
-    //    }
-    //  }
-    //}
-
-    if (Input().Has(InputEvents::pressed_pause) && !pressedStart) {
-      pressedStart = true;
-
-      // We want the next screen to be the main menu screen
-      using tx = segue<DiamondTileCircle>::to<Overworld::Homepage>;
-      getController().push<tx>();
-
-      /*if (!loginSelected) {
-        getController().push<ConfigScene>();
-      }*/
-
-      // Zoom out and start a segue effect
-      //getController().pop<segue<DiamondTileCircle>>();
+    if (Input().Has(InputEvents::pressed_pause)) {
+        pressedStart = true;
+        startLabel.SetString("NEW GAME");
+    }
+    if (pressedStart) {
+        if (!isRightPressed) {
+            startLabel.SetString("NEW GAME");
+        }
+        if (Input().Has(InputEvents::pressed_confirm) && !isRightPressed) {
+            // We want the next screen to be the main menu screen
+            using tx = segue<DiamondTileCircle>::to<Overworld::Homepage>;
+            getController().push<tx>();
+        }
+        if (Input().Has(InputEvents::pressed_ui_right)) {
+            isRightPressed = true;
+            startLabel.SetString("CONTINUE");
+        }
+        if (isRightPressed) {
+            startLabel.SetString("CONTINUE");
+            if (Input().Has(InputEvents::pressed_ui_left)) {
+                isRightPressed = false;
+                startLabel.SetString("NEW GAME");
+            }
+            if (Input().Has(InputEvents::pressed_confirm)) {
+                Logger::Log("Not a feature yet.");
+            }
+        }
     }
   }
   catch (std::future_error& err) {

@@ -264,51 +264,6 @@ const Endianness Game::GetEndianness()
 
 void Game::LoadConfigSettings()
 {
-  // try to read the config file
-  configSettings = reader.GetConfigSettings();
-
-  if (configSettings.IsOK()) {
-    const WebServerInfo info = configSettings.GetWebServerInfo();
-    const std::string version = info.version;
-    const std::string URL = info.URL;
-    const int port = info.port;
-    const std::string username = info.user;
-    const std::string password = info.password;
-
-    if (URL.empty() || version.empty() || username.empty() || password.empty()) {
-      Logger::Logf("One or more web server fields are empty in config.");
-    }
-    else {
-
-      Logger::Logf("Connecting to web server @ %s:%i (Version %s)", URL.data(), port, version.data());
-
-      WEBCLIENT.ConnectToWebServer(version.data(), URL.data(), port);
-      auto result = WEBCLIENT.SendLoginCommand(username, password);
-
-      Logger::Logf("waiting for server...");
-
-      int timeoutCount = 0;
-      constexpr int MAX_TIMEOUT = 5;
-
-      while (!is_ready(result) && timeoutCount < MAX_TIMEOUT) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        Logger::Logf("timeout %i", ++timeoutCount);
-      }
-
-      if (timeoutCount == MAX_TIMEOUT) {
-        Logger::Logf("Could not communicate with the server. Aborting automatic login.");
-      }
-      else if (is_ready(result)) {
-        bool success = result.get();
-        if (success) {
-          Logger::Logf("Logged in! Welcome %s!", username.data());
-        }
-        else {
-          Logger::Logf("Could not authenticate. Aborting automatic login");
-        }
-      }
-    }
-  }
 }
 
 void Game::RunNaviInit(std::atomic<int>* progress) {

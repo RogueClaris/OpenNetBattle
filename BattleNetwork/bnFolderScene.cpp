@@ -362,7 +362,6 @@ void FolderScene::onUpdate(double elapsed) {
           if (collection.GetFolder(currFolderIndex, folder) && !folder->HasErrors()) {
             selectedFolderIndex = currFolderIndex;
             collection.SwapOrder(0, selectedFolderIndex);
-            folder->equipped = true;
 
             // Save this session data
             auto folderStr = collection.GetFolderNames()[0];
@@ -602,7 +601,7 @@ void FolderScene::onDraw(sf::RenderTexture& surface) {
     for (int i = 0; i < maxCardsOnScreen && currCardIndex + i < numOfCards; i++) {
       float cardIconY = 132.0f + (32.f*i);
 
-      cardIcon.setTexture(*WEBCLIENT.GetIconForCard((*iter)->GetUUID()));
+      cardIcon.setTexture(*Textures().LoadTextureFromFile("resources/cardicons/" + (*iter)->GetShortName() + ".png"));
       cardIcon.setPosition(2.f*99.f, cardIconY);
       surface.draw(cardIcon);
 

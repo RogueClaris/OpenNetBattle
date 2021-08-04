@@ -25,7 +25,8 @@ private:
   bool ready = false;
   bool loadMobs = false;
   bool pressedStart = false;
-  bool loginSelected = true;
+  bool loginSelected = false;
+  bool isRightPressed = false;
 
   void CenterLabel();
 public:

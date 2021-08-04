@@ -36,6 +36,7 @@
 #include "bnOverworldMenuSystem.h"
 #include "bnXML.h"
 #include "bnMinimap.h"
+#include "bnOverworldPlayerSessionWriter.h"
 
 class Background; // forward decl
 

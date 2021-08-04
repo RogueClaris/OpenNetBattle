@@ -63,17 +63,12 @@ BattleItem* Mob::GetRankedReward(int score) {
   return new BattleItem(*possibleIter);
 }
 
+void Mob::SetField(Field* fieldToSet) {
+    field = fieldToSet;
+}
+
 void Mob::Cleanup() {
   delete field;
-
-  //for (int i = 0; i < spawn.size(); i++) {
-  //  delete spawn[i];
-  //}
-
-  /*iter = spawn.end();
-  field = nullptr;
-  spawn.clear();
-  components.clear();*/
 }
 
 void Mob::KillSwitch() {
