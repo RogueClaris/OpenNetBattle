@@ -237,6 +237,7 @@ namespace Overworld {
         void OnInteract(Interaction type) override;
     };
 <<<<<<< HEAD
+=======
 
     struct ExcludedObjectData {
       bool visible;
@@ -253,6 +254,7 @@ namespace Overworld {
       Poco::Buffer<char> buffer{ 0 };
     };
 
+    Overworld::EmoteWidget emote;
     Overworld::EmoteNode emoteNode;
     std::shared_ptr<sf::Texture> customEmotesTexture;
     std::string pvpRemoteAddress; // remember who we want to connect to after download scene
@@ -292,6 +294,16 @@ namespace Overworld {
     void HandlePVPStep(const std::string& remoteAddress);
     void ResetPVPStep();
 
+
+    //emote additions, from SceneBase.
+    void SetCustomEmotesTexture(const std::shared_ptr<sf::Texture>&);
+    const std::shared_ptr<sf::Texture>& GetCustomEmotesTexture() const;
+    EmoteNode& GetEmoteNode();
+    EmoteWidget& GetEmoteWidget();
+    virtual void OnEmoteSelected(Emotes emote);
+    virtual void OnEmoteSelectedCL(Emotes emote);
+    virtual void OnCustomEmoteSelected(unsigned emote);
+
     std::optional<AbstractUser> GetAbstractUser(const std::string& id);
     void onInteract(Interaction type);
     void updateOtherPlayers(double elapsed);
@@ -299,6 +311,7 @@ namespace Overworld {
     void detectWarp(std::shared_ptr<Actor>& player);
     void detectConveyor(std::shared_ptr<Actor>& player);
     bool positionIsInWarp(sf::Vector3f position);
+    Overworld::TeleportController::Command& teleportIn(sf::Vector3f position, Direction direction);
     void transferServer(const std::string& address, uint16_t port, const std::string& data, bool warpOut);
     void processPacketBody(const Poco::Buffer<char>& data);
 
@@ -411,6 +424,5 @@ namespace Overworld {
     void OnTileCollision() override;
     void OnInteract(Interaction type) override;
   };
-=======
->>>>>>> 9e4683d5 (Backing up changes)
+>>>>>>> development
 }

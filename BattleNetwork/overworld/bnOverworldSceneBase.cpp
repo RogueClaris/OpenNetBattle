@@ -64,35 +64,6 @@ namespace {
 }
 
 Overworld::SceneBase::SceneBase(swoosh::ActivityController& controller) :
-<<<<<<< HEAD
-  lastIsConnectedState(false),
-  playerSession(std::make_shared<PlayerSession>()),
-  personalMenu(std::make_shared<PersonalMenu>(playerSession, "Overworld", ::MakeOptions(this))),
-  minimap(std::make_shared<Minimap>()),
-  camera(controller.getWindow().getView()),
-  Scene(controller),
-  map(0, 0, 0, 0),
-<<<<<<< HEAD
-  playerActor(std::make_shared<Overworld::Actor>("You"))
-=======
-  time(Font::Style::thick),
-  playerActor(std::make_shared<Overworld::Actor>(""))
->>>>>>> e6731f26 (First commit to newness)
-{
-  
-  // Draws the scrolling background
-  SetBackground(std::make_shared<LanBackground>());
-
-  // set the missing texture for all actor objects
-  auto missingTexture = Textures().LoadTextureFromFile("resources/ow/missing.png");
-  Overworld::Actor::SetMissingTexture(missingTexture);
-
-  personalMenu->setScale(2.f, 2.f);
-
-  gotoNextScene = true;
-
-  /// WEB ACCOUNT LOADING
-=======
     lastIsConnectedState(false),
     playerSession(std::make_shared<PlayerSession>()),
     personalMenu(playerSession, "Overworld", ::MakeOptions(this)),
@@ -102,9 +73,64 @@ Overworld::SceneBase::SceneBase(swoosh::ActivityController& controller) :
     time(Font::Style::thick),
     playerActor(std::make_shared<Overworld::Actor>("You"))
 {
+<<<<<<< HEAD
     // Draws the scrolling background
     SetBackground(std::make_shared<LanBackground>());
->>>>>>> 9e4683d5 (Backing up changes)
+=======
+  // When we reach the menu scene we need to load the player information
+  // before proceeding to next sub menus
+  webAccountIcon.setTexture(LOAD_TEXTURE(WEBACCOUNT_STATUS));
+  webAccountIcon.setScale(2.f, 2.f);
+  webAccountIcon.setPosition(4, getController().getVirtualWindowSize().y - 44.0f);
+  webAccountAnimator = Animation("resources/ui/webaccount_icon.animation");
+  webAccountAnimator.Load();
+  webAccountAnimator.SetAnimation("NO_CONNECTION");
+
+  // Draws the scrolling background
+  SetBackground(std::make_shared<LanBackground>());
+
+  // set the missing texture for all actor objects
+  auto missingTexture = Textures().LoadTextureFromFile("resources/ow/missing.png");
+  Overworld::Actor::SetMissingTexture(missingTexture);
+
+  personalMenu.setScale(2.f, 2.f);
+  //emote.setScale(2.f, 2.f);
+
+  gotoNextScene = true;
+
+  /// WEB ACCOUNT LOADING
+
+  WebAccounts::AccountState account;
+
+  if (WEBCLIENT.IsLoggedIn()) {
+    bool loaded = WEBCLIENT.LoadSession("profile.bin", &account);
+
+    // Quickly load the session on disk to reduce wait times
+    if (loaded) {
+      Logger::Log("Found cached account data");
+
+      WEBCLIENT.UseCachedAccount(account);
+      WEBCLIENT.CacheTextureData(account);
+      folders = CardFolderCollection::ReadFromWebAccount(account);
+      programAdvance = PA::ReadFromWebAccount(account);
+
+      NaviEquipSelectedFolder();
+    }
+
+    Logger::Log("Fetching account data...");
+
+    // resent fetch command to get the a latest account info
+    accountCommandResponse = WEBCLIENT.SendFetchAccountCommand();
+
+    Logger::Log("waiting for server...");
+  }
+  else {
+
+    // If we are not actively online but we have a profile on disk, try to load our previous session
+    // The user may be logging in but has not completed yet and we want to reduce wait times...
+    // Otherwise, use the guest profile
+    bool loaded = WEBCLIENT.LoadSession("profile.bin", &account) || WEBCLIENT.LoadSession("guest.bin", &account);
+>>>>>>> development
 
     // set the missing texture for all actor objects
     auto missingTexture = Textures().LoadTextureFromFile("resources/ow/missing.png");
@@ -113,14 +139,16 @@ Overworld::SceneBase::SceneBase(swoosh::ActivityController& controller) :
     personalMenu.setScale(2.f, 2.f);
 
 <<<<<<< HEAD
-  // Spawn overworld player
-  playerActor->setPosition(200, 20);
-  playerActor->SetCollisionRadius(4);
-=======
     gotoNextScene = true;
 
     setView(sf::Vector2u(480, 320));
->>>>>>> 9e4683d5 (Backing up changes)
+=======
+  setView(sf::Vector2u(480, 320));
+
+  // Spawn overworld player
+  playerActor->setPosition(200, 20);
+  playerActor->SetCollisionRadius(4);
+>>>>>>> development
 
     // Spawn overworld player
     playerActor->setPosition(200, 20);
@@ -130,15 +158,16 @@ Overworld::SceneBase::SceneBase(swoosh::ActivityController& controller) :
     AddSprite(teleportController.GetBeam());
 
 <<<<<<< HEAD
-  menuSystem.BindMenu(InputEvents::pressed_pause, personalMenu);
-  menuSystem.BindMenu(InputEvents::pressed_map, minimap);
-=======
     map.setScale(2.f, 2.f);
 
     // clock
     time.setPosition(480 - 4.f, 6.f);
     time.setScale(2.f, 2.f);
->>>>>>> 9e4683d5 (Backing up changes)
+=======
+  // clock
+  time.setPosition(480 - 4.f, 6.f);
+  time.setScale(2.f, 2.f);
+>>>>>>> development
 }
 
 void Overworld::SceneBase::onStart() {
@@ -195,19 +224,11 @@ void Overworld::SceneBase::onUpdate(double elapsed) {
         screenPos.x = std::floor(screenPos.x);
         screenPos.y = std::floor(screenPos.y);
 
-<<<<<<< HEAD
-    // update minimap
-    auto playerTilePos = map.WorldToTileSpace(playerActor->getPosition());
-    bool isConcealed = map.IsConcealed(sf::Vector2i(playerTilePos), playerActor->GetLayer());
-    minimap->SetPlayerPosition(screenPos, isConcealed);
-  }
-=======
         // update minimap
         auto playerTilePos = map.WorldToTileSpace(playerActor->getPosition());
         bool isConcealed = map.IsConcealed(sf::Vector2i(playerTilePos), playerActor->GetLayer());
         minimap.SetPlayerPosition(screenPos, isConcealed);
     }
->>>>>>> 9e4683d5 (Backing up changes)
 
     for (auto& actor : actors) {
         actor->Update((float)elapsed, map, spatialMap);
@@ -271,27 +292,21 @@ void Overworld::SceneBase::onUpdate(double elapsed) {
             });
     }
 
+<<<<<<< HEAD
     // Loop the bg
     bg->Update((float)elapsed);
 
     // Update the widget
     personalMenu.Update((float)elapsed);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-  // Update the widget
-  personalMenu.Update((float)elapsed);
-
->>>>>>> b787966a (Small backup update)
-  // Update the textbox
-  menuSystem.Update((float)elapsed);
-=======
     // Update the textbox
     menuSystem.Update((float)elapsed);
+=======
+  // Update the textbox
+  menuSystem.Update((float)elapsed);
+>>>>>>> development
 
     HandleCamera((float)elapsed);
->>>>>>> 9e4683d5 (Backing up changes)
 
     // Allow player to resync with remote account by pressing the pause action
     /*if (Input().Has(InputEvents::pressed_option)) {
@@ -322,22 +337,6 @@ void Overworld::SceneBase::HandleCamera(float elapsed) {
 }
 
 void Overworld::SceneBase::HandleInput() {
-<<<<<<< HEAD
-  auto& window = getController().getWindow();
-  auto mousei = sf::Mouse::getPosition(window);
-  auto mousef = window.mapPixelToCoords(mousei);
-
-  menuSystem.HandleInput(Input(), mousef);
-
-  if (!menuSystem.IsClosed()) {
-    return;
-  }
-
-  // check to see if talk button was pressed
-  if (!IsInputLocked()) {
-    if (Input().Has(InputEvents::pressed_interact)) {
-      OnInteract(Interaction::action);
-=======
     if (showMinimap) {
         sf::Vector2f panning = {};
 
@@ -381,6 +380,7 @@ void Overworld::SceneBase::HandleInput() {
         return;
     }
 
+<<<<<<< HEAD
     // check to see if talk button was pressed
     if (!IsInputLocked()) {
         if (Input().Has(InputEvents::pressed_interact)) {
@@ -394,16 +394,40 @@ void Overworld::SceneBase::HandleInput() {
     if (Input().Has(InputEvents::pressed_pause) && !Input().Has(InputEvents::pressed_cancel)) {
         personalMenu.Open();
         Audio().Play(AudioType::CHIP_DESC);
->>>>>>> 9e4683d5 (Backing up changes)
+=======
+  if (!menuSystem.IsClosed()) {
+    menuSystem.HandleInput(Input(), getController().getWindow());
+    return;
+  }
+
+  if (!personalMenu.IsClosed()) {
+    personalMenu.HandleInput(Input(), Audio());
+    return;
+  }
+
+  // check to see if talk button was pressed
+  if (!IsInputLocked()) {
+    if (Input().Has(InputEvents::pressed_interact)) {
+      OnInteract(Interaction::action);
+>>>>>>> development
     }
     else if (Input().Has(InputEvents::pressed_map)) {
         showMinimap = true;
         minimap.ResetPanning();
     }
 <<<<<<< HEAD
-  }
 =======
->>>>>>> 9e4683d5 (Backing up changes)
+  }
+
+  if (Input().Has(InputEvents::pressed_pause) && !Input().Has(InputEvents::pressed_cancel)) {
+    personalMenu.Open();
+    Audio().Play(AudioType::CHIP_DESC);
+  }
+  else if (Input().Has(InputEvents::pressed_map)) {
+    showMinimap = true;
+    minimap.ResetPanning();
+  }
+>>>>>>> development
 }
 
 void Overworld::SceneBase::onLeave() {
@@ -466,12 +490,6 @@ void Overworld::SceneBase::onResume() {
 }
 
 void Overworld::SceneBase::onDraw(sf::RenderTexture& surface) {
-<<<<<<< HEAD
-  if (menuSystem.IsFullscreen()) {
-    surface.draw(menuSystem);
-    return;
-  }
-=======
     if (showMinimap) {
         surface.draw(minimap);
         return;
@@ -481,7 +499,6 @@ void Overworld::SceneBase::onDraw(sf::RenderTexture& surface) {
         surface.draw(menuSystem);
         return;
     }
->>>>>>> 9e4683d5 (Backing up changes)
 
     if (bg) {
         surface.draw(*bg);
@@ -490,27 +507,18 @@ void Overworld::SceneBase::onDraw(sf::RenderTexture& surface) {
     DrawWorld(surface, sf::RenderStates::Default);
 
 <<<<<<< HEAD
-  if (personalMenu->IsClosed()) {
-    // menuSystem will not draw personal menu if it's closed
-    // might make sense to extract some parts of menu system as the closed UI has different requirements
-    personalMenu->draw(surface, sf::RenderStates::Default);
-  }
-=======
     surface.draw(personalMenu);
->>>>>>> 9e4683d5 (Backing up changes)
+=======
+  surface.draw(personalMenu);
+>>>>>>> development
 
     // Add the web account connection symbol
     surface.draw(webAccountIcon);
 
-<<<<<<< HEAD
-  // This will mask everything before this line with camera fx
-  surface.draw(camera.GetLens());
-=======
     PrintTime(surface);
 
     // This will mask everything before this line with camera fx
     surface.draw(camera.GetLens());
->>>>>>> 9e4683d5 (Backing up changes)
 
     // always see menus
     surface.draw(menuSystem);
@@ -699,20 +707,6 @@ void Overworld::SceneBase::RefreshNaviSprite()
     const auto& owPath = meta.GetOverworldAnimationPath();
 
 <<<<<<< HEAD
-  if (owPath.size()) {
-    if (auto tex = Textures().LoadTextureFromFile(meta.GetOverworldTexturePath())) {
-      playerActor->setTexture(tex);
-    }
-    playerActor->LoadAnimations(owPath);
-
-    auto iconTexture = meta.GetIconTexture();
-
-    if (iconTexture) {
-      personalMenu->UseIconTexture(iconTexture);
-    }
-    else {
-      personalMenu->ResetIconTexture();
-=======
     if (owPath.size()) {
         if (auto tex = Textures().LoadTextureFromFile(meta.GetOverworldTexturePath())) {
             playerActor->setTexture(tex);
@@ -720,6 +714,15 @@ void Overworld::SceneBase::RefreshNaviSprite()
         playerActor->LoadAnimations(owPath);
 
         auto iconTexture = meta.GetIconTexture();
+=======
+  if (owPath.size()) {
+    if (auto tex = Textures().LoadTextureFromFile(meta.GetOverworldTexturePath())) {
+      playerActor->setTexture(tex);
+    }
+    playerActor->LoadAnimations(owPath);
+
+    auto iconTexture = meta.GetIconTexture();
+>>>>>>> development
 
         if (iconTexture) {
             personalMenu.UseIconTexture(iconTexture);
@@ -730,7 +733,6 @@ void Overworld::SceneBase::RefreshNaviSprite()
     }
     else {
         Logger::Logf("Overworld animation not found for navi at index %i", currentNavi);
->>>>>>> 9e4683d5 (Backing up changes)
     }
 }
 
@@ -843,11 +845,7 @@ void Overworld::SceneBase::LoadMap(const std::string& data)
         Audio().Stream(GetPath(map.GetSongPath()), true);
     }
 
-<<<<<<< HEAD
-  personalMenu->SetArea(map.GetName());
-=======
     personalMenu.SetArea(map.GetName());
->>>>>>> 9e4683d5 (Backing up changes)
 
     // cleanup data from the previous map
     this->map.RemoveSprites(*this);
@@ -861,13 +859,8 @@ void Overworld::SceneBase::LoadMap(const std::string& data)
     // update map to trigger recalculating shadows for minimap
     this->map.Update(*this, 0.0f);
 
-<<<<<<< HEAD
-  *minimap = Minimap::CreateFrom(this->map.GetName(), this->map);
-  minimap->setScale(2.f, 2.f);
-=======
     minimap = Minimap::CreateFrom(this->map.GetName(), this->map);
     minimap.setScale(2.f, 2.f);
->>>>>>> 9e4683d5 (Backing up changes)
 }
 
 void Overworld::SceneBase::TeleportUponReturn(const sf::Vector3f& position)
@@ -915,18 +908,11 @@ void Overworld::SceneBase::RemoveActor(const std::shared_ptr<Actor>& actor) {
 }
 
 bool Overworld::SceneBase::IsInputLocked() {
-<<<<<<< HEAD
-  return
-    inputLocked || gotoNextScene ||
-    menuSystem.ShouldLockInput() ||
-    !teleportController.IsComplete() || teleportController.TeleportedOut();
-=======
     return
         inputLocked || gotoNextScene || showMinimap ||
         !personalMenu.IsClosed() ||
         !menuSystem.IsClosed() ||
         !teleportController.IsComplete() || teleportController.TeleportedOut();
->>>>>>> 9e4683d5 (Backing up changes)
 }
 
 void Overworld::SceneBase::LockInput() {
@@ -1026,20 +1012,12 @@ void Overworld::SceneBase::GotoKeyItems()
 
 Overworld::PersonalMenu& Overworld::SceneBase::GetPersonalMenu()
 {
-<<<<<<< HEAD
-  return *personalMenu;
-=======
     return personalMenu;
->>>>>>> 9e4683d5 (Backing up changes)
 }
 
 Overworld::Minimap& Overworld::SceneBase::GetMinimap()
 {
-<<<<<<< HEAD
-  return *minimap;
-=======
     return minimap;
->>>>>>> 9e4683d5 (Backing up changes)
 }
 
 Overworld::SpatialMap& Overworld::SceneBase::GetSpatialMap()
@@ -1085,10 +1063,10 @@ Overworld::TeleportController& Overworld::SceneBase::GetTeleportController()
 SelectedNavi& Overworld::SceneBase::GetCurrentNavi()
 {
 <<<<<<< HEAD
-  return currentNavi;
-=======
     return currentNavi;
->>>>>>> 9e4683d5 (Backing up changes)
+=======
+  return currentNavi;
+>>>>>>> development
 }
 
 std::shared_ptr<Background> Overworld::SceneBase::GetBackground()
@@ -1114,10 +1092,10 @@ std::optional<CardFolder*> Overworld::SceneBase::GetSelectedFolder() {
 Overworld::MenuSystem& Overworld::SceneBase::GetMenuSystem()
 {
 <<<<<<< HEAD
-  return menuSystem;
-=======
     return menuSystem;
->>>>>>> 9e4683d5 (Backing up changes)
+=======
+  return menuSystem;
+>>>>>>> development
 }
 
 void Overworld::SceneBase::AddItem(const std::string& id, const std::string& name, const std::string& description)
@@ -1179,8 +1157,6 @@ const bool Overworld::SceneBase::IsMouseHovering(const sf::Vector2f& mouse, cons
     return (mouse.x >= bounds.left && mouse.x <= bounds.left + bounds.width && mouse.y >= bounds.top && mouse.y <= bounds.top + bounds.height);
 }
 
-<<<<<<< HEAD
-=======
 void Overworld::SceneBase::PrintTime(sf::RenderTarget& target)
 {
     auto shadowColor = sf::Color(105, 105, 105);
@@ -1212,7 +1188,6 @@ void Overworld::SceneBase::PrintTime(sf::RenderTarget& target)
     target.draw(time);
 }
 
->>>>>>> 9e4683d5 (Backing up changes)
 #ifdef __ANDROID__
 void Overworld::SceneBase::StartupTouchControls() {
     ui.setScale(2.f, 2.f);

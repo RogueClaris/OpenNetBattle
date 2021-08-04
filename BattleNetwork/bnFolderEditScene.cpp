@@ -209,19 +209,9 @@ FolderEditScene::FolderEditScene(swoosh::ActivityController& controller, CardFol
     card.setScale(2.f, 2.f);
     card.setOrigin(card.getLocalBounds().width / 2.0f, card.getLocalBounds().height / 2.0f);
 
-<<<<<<< HEAD
     cardIcon = sf::Sprite();
     cardIcon.setTextureRect(sf::IntRect(0, 0, 14, 14));
     cardIcon.setScale(2.f, 2.f);
-=======
-  cardIcon = sf::Sprite();
-  cardIcon.setTextureRect(sf::IntRect(0, 0, 14, 14));
-<<<<<<< HEAD
-  cardIcon.setScale(1.f, 1.f);
->>>>>>> 71b496d9 (Backing up changes; working on cross canceling.)
-=======
-  cardIcon.setScale(2.f, 2.f);
->>>>>>> 50425d6e (Adjusting card selection. Added form cancelling properly this time.)
 
     cardRevealTimer.start();
     easeInTimer.start();
@@ -331,12 +321,6 @@ void FolderEditScene::onUpdate(double elapsed) {
             selectInputCooldown -= elapsed;
 
 <<<<<<< HEAD
-            if (selectInputCooldown <= 0) {
-                selectInputCooldown = maxSelectInputCooldown;
-                view->currCardIndex -= view->maxCardsOnScreen;
-
-                view->currCardIndex = std::max(view->currCardIndex, 0);
-=======
     if (Input().Has(InputEvents::pressed_confirm)) {
       if (currViewMode == ViewMode::folder) {
         if (folderView.swapCardIndex != -1) {
@@ -372,7 +356,13 @@ void FolderEditScene::onUpdate(double elapsed) {
             // The card from the pack is copied and added to the slot
             // The slot card needs to find its corresponding bucket and increment it
             Battle::Card copy;
->>>>>>> 50425d6e (Adjusting card selection. Added form cancelling properly this time.)
+=======
+            if (selectInputCooldown <= 0) {
+                selectInputCooldown = maxSelectInputCooldown;
+                view->currCardIndex -= view->maxCardsOnScreen;
+
+                view->currCardIndex = std::max(view->currCardIndex, 0);
+>>>>>>> development
 
                 Audio().Play(AudioType::CHIP_SELECT);
 
@@ -597,16 +587,6 @@ void FolderEditScene::onUpdate(double elapsed) {
             }
         }
 <<<<<<< HEAD
-        else if (Input().Has(InputEvents::pressed_ui_right) && currViewMode == ViewMode::folder) {
-            currViewMode = ViewMode::pool;
-            canInteract = false;
-            Audio().Play(AudioType::CHIP_DESC);
-        }
-        else if (Input().Has(InputEvents::pressed_ui_left) && currViewMode == ViewMode::pool) {
-            currViewMode = ViewMode::folder;
-            canInteract = false;
-            Audio().Play(AudioType::CHIP_DESC);
-=======
       }
       else if (currViewMode == ViewMode::pool) {
         if (packView.swapCardIndex != -1) {
@@ -645,7 +625,17 @@ void FolderEditScene::onUpdate(double elapsed) {
 
             packView.swapCardIndex = -1;
           }
->>>>>>> 50425d6e (Adjusting card selection. Added form cancelling properly this time.)
+=======
+        else if (Input().Has(InputEvents::pressed_ui_right) && currViewMode == ViewMode::folder) {
+            currViewMode = ViewMode::pool;
+            canInteract = false;
+            Audio().Play(AudioType::CHIP_DESC);
+        }
+        else if (Input().Has(InputEvents::pressed_ui_left) && currViewMode == ViewMode::pool) {
+            currViewMode = ViewMode::folder;
+            canInteract = false;
+            Audio().Play(AudioType::CHIP_DESC);
+>>>>>>> development
         }
 
         view->currCardIndex = std::max(0, view->currCardIndex);
@@ -799,28 +789,6 @@ void FolderEditScene::onDraw(sf::RenderTexture& surface) {
 
 void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
 <<<<<<< HEAD
-    cardDesc.setPosition(sf::Vector2f(26.f, 175.0f));
-    scrollbar.setPosition(410.f, 60.f);
-    cardHolder.setPosition(16.f, 32.f);
-    element.setPosition(2.f * 28.f, 136.f);
-    card.setPosition(96.f, 88.f);
-
-    surface.draw(folderDock);
-    surface.draw(cardHolder);
-
-    // ScrollBar limits: Top to bottom screen position when selecting first and last card respectively
-    float top = 50.0f; float bottom = 230.0f;
-    float depth = ((float)folderView.lastCardOnScreen / (float)folderView.numOfCards) * bottom;
-    scrollbar.setPosition(452.f, top + depth);
-
-    surface.draw(scrollbar);
-
-    // Move the card library iterator to the current highlighted card
-    auto iter = folderCardSlots.begin();
-
-    for (int j = 0; j < folderView.lastCardOnScreen; j++) {
-        iter++;
-=======
   cardDesc.setPosition(sf::Vector2f(26.f, 175.0f));
   scrollbar.setPosition(410.f, 60.f);
   cardHolder.setPosition(16.f, 32.f);
@@ -872,7 +840,29 @@ void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
       //Draw MB
       mbPlaceholder.setPosition(2.f*210.f, cardIconY + 2.0f);
       surface.draw(mbPlaceholder);
->>>>>>> c88ccfe8 (Backing up changes.)
+=======
+    cardDesc.setPosition(sf::Vector2f(26.f, 175.0f));
+    scrollbar.setPosition(410.f, 60.f);
+    cardHolder.setPosition(16.f, 32.f);
+    element.setPosition(2.f * 28.f, 136.f);
+    card.setPosition(96.f, 88.f);
+
+    surface.draw(folderDock);
+    surface.draw(cardHolder);
+
+    // ScrollBar limits: Top to bottom screen position when selecting first and last card respectively
+    float top = 50.0f; float bottom = 230.0f;
+    float depth = ((float)folderView.lastCardOnScreen / (float)folderView.numOfCards) * bottom;
+    scrollbar.setPosition(452.f, top + depth);
+
+    surface.draw(scrollbar);
+
+    // Move the card library iterator to the current highlighted card
+    auto iter = folderCardSlots.begin();
+
+    for (int j = 0; j < folderView.lastCardOnScreen; j++) {
+        iter++;
+>>>>>>> development
     }
 
     // Now that we are at the viewing range, draw each card in the list
@@ -930,31 +920,20 @@ void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
                 }
 
 <<<<<<< HEAD
+        card.setTexture(*Textures().LoadTextureFromFile("resources/cardimages/" + copy.GetShortName() + ".png"));
+        card.setScale((float)swoosh::ease::linear(cardRevealTimer.getElapsed().asSeconds(), 0.25f, 1.0f)*2.0f, 2.0f);
+        surface.draw(card);
+=======
                 cardLabel.setOrigin(0, 0);
                 cardLabel.SetColor(sf::Color::Yellow);
                 cardLabel.setPosition(2.f * 16.f, 142.f);
                 cardLabel.SetString(std::string() + copy.GetCode());
                 surface.draw(cardLabel);
+>>>>>>> development
 
                 std::string formatted = FormatCardDesc(copy.GetDescription());
                 cardDesc.SetString(formatted);
                 surface.draw(cardDesc);
-=======
-        card.setTexture(*Textures().LoadTextureFromFile("resources/cardimages/" + copy.GetShortName() + ".png"));
-        card.setScale((float)swoosh::ease::linear(cardRevealTimer.getElapsed().asSeconds(), 0.25f, 1.0f)*2.0f, 2.0f);
-        surface.draw(card);
-
-        // This draws the currently highlighted card
-        if (copy.GetDamage() > 0) {
-          cardLabel.SetColor(sf::Color::White);
-          cardLabel.SetString(std::to_string(copy.GetDamage()));
-          cardLabel.setOrigin(cardLabel.GetLocalBounds().width + cardLabel.GetLocalBounds().left, 0);
-<<<<<<< HEAD
-          cardLabel.setPosition(2.f*80.f, 152.f);
->>>>>>> c88ccfe8 (Backing up changes.)
-=======
-          cardLabel.setPosition(2.f*80.f, 142.f);
->>>>>>> 50425d6e (Adjusting card selection. Added form cancelling properly this time.)
 
                 int offset = (int)(copy.GetElement());
                 element.setTextureRect(sf::IntRect(14 * offset, 0, 14, 14));
@@ -978,49 +957,6 @@ void FolderEditScene::DrawFolder(sf::RenderTarget& surface) {
 
 void FolderEditScene::DrawPool(sf::RenderTarget& surface) {
 <<<<<<< HEAD
-    cardDesc.setPosition(sf::Vector2f(320.f + 480.f, 175.0f));
-    packCardHolder.setPosition(310.f + 480.f, 35.f);
-    element.setPosition(400.f + 2.f * 20.f + 480.f, 146.f);
-    card.setPosition(389.f + 480.f, 93.f);
-
-    surface.draw(packDock);
-    surface.draw(packCardHolder);
-
-    // ScrollBar limits: Top to bottom screen position when selecting first and last card respectively
-    float top = 50.0f; float bottom = 230.0f;
-    float depth = ((float)packView.lastCardOnScreen / (float)packView.numOfCards) * bottom;
-    scrollbar.setPosition(292.f + 480.f, top + depth);
-
-    surface.draw(scrollbar);
-
-    if (packView.numOfCards == 0) return;
-
-    // Move the card library iterator to the current highlighted card
-    auto iter = poolCardBuckets.begin();
-
-    for (int j = 0; j < packView.lastCardOnScreen; j++) {
-        iter++;
-    }
-
-    // Now that we are at the viewing range, draw each card in the list
-    for (int i = 0; i < packView.maxCardsOnScreen && packView.lastCardOnScreen + i < packView.numOfCards; i++) {
-        int count = iter->GetCount();
-        const Battle::Card& copy = iter->ViewCard();
-
-        cardIcon.setTexture(*WEBCLIENT.GetIconForCard(copy.GetUUID()));
-        cardIcon.setPosition(16.f + 480.f, 65.0f + (32.f * i));
-        surface.draw(cardIcon);
-
-        cardLabel.SetColor(sf::Color::White);
-        cardLabel.setPosition(49.f + 480.f, 69.0f + (32.f * i));
-        cardLabel.SetString(copy.GetShortName());
-        surface.draw(cardLabel);
-
-        int offset = (int)(copy.GetElement());
-        element.setTextureRect(sf::IntRect(14 * offset, 0, 14, 14));
-        element.setPosition(182.0f + 480.f, 65.0f + (32.f * i));
-        surface.draw(element);
-=======
   cardDesc.setPosition(sf::Vector2f(320.f + 480.f, 175.0f));
   packCardHolder.setPosition(310.f + 480.f, 35.f);
   element.setPosition(400.f + 2.f*20.f + 480.f, 146.f);
@@ -1098,14 +1034,56 @@ void FolderEditScene::DrawPool(sf::RenderTarget& surface) {
         cardLabel.SetString(std::to_string(copy.GetDamage()));
         cardLabel.setOrigin(cardLabel.GetLocalBounds().width + cardLabel.GetLocalBounds().left, 0);
         cardLabel.setPosition(2.f*(223.f) + 480.f, 145.f);
->>>>>>> c88ccfe8 (Backing up changes.)
+=======
+    cardDesc.setPosition(sf::Vector2f(320.f + 480.f, 175.0f));
+    packCardHolder.setPosition(310.f + 480.f, 35.f);
+    element.setPosition(400.f + 2.f * 20.f + 480.f, 146.f);
+    card.setPosition(389.f + 480.f, 93.f);
+
+    surface.draw(packDock);
+    surface.draw(packCardHolder);
+
+    // ScrollBar limits: Top to bottom screen position when selecting first and last card respectively
+    float top = 50.0f; float bottom = 230.0f;
+    float depth = ((float)packView.lastCardOnScreen / (float)packView.numOfCards) * bottom;
+    scrollbar.setPosition(292.f + 480.f, top + depth);
+
+    surface.draw(scrollbar);
+
+    if (packView.numOfCards == 0) return;
+
+    // Move the card library iterator to the current highlighted card
+    auto iter = poolCardBuckets.begin();
+
+    for (int j = 0; j < packView.lastCardOnScreen; j++) {
+        iter++;
+    }
+
+    // Now that we are at the viewing range, draw each card in the list
+    for (int i = 0; i < packView.maxCardsOnScreen && packView.lastCardOnScreen + i < packView.numOfCards; i++) {
+        int count = iter->GetCount();
+        const Battle::Card& copy = iter->ViewCard();
+
+        cardIcon.setTexture(*WEBCLIENT.GetIconForCard(copy.GetUUID()));
+        cardIcon.setPosition(16.f + 480.f, 65.0f + (32.f * i));
+        surface.draw(cardIcon);
+
+        cardLabel.SetColor(sf::Color::White);
+        cardLabel.setPosition(49.f + 480.f, 69.0f + (32.f * i));
+        cardLabel.SetString(copy.GetShortName());
+        surface.draw(cardLabel);
+
+        int offset = (int)(copy.GetElement());
+        element.setTextureRect(sf::IntRect(14 * offset, 0, 14, 14));
+        element.setPosition(182.0f + 480.f, 65.0f + (32.f * i));
+        surface.draw(element);
+>>>>>>> development
 
         cardLabel.setOrigin(0, 0);
         cardLabel.setPosition(216.f + 480.f, 69.0f + (32.f * i));
         cardLabel.SetString(std::string() + copy.GetCode());
         surface.draw(cardLabel);
 <<<<<<< HEAD
-=======
       }
 
       cardLabel.setOrigin(0, 0);
@@ -1132,7 +1110,8 @@ void FolderEditScene::DrawPool(sf::RenderTarget& surface) {
       surface.draw(packSwapCursor);
       packSwapCursor.setColor(sf::Color::White);
     }
->>>>>>> c88ccfe8 (Backing up changes.)
+=======
+>>>>>>> development
 
         //Draw MB
         mbPlaceholder.setPosition(236.f + 480.f, 67.0f + (32.f * i));

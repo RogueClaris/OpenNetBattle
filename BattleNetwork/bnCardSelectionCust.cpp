@@ -97,17 +97,8 @@ void CardSelectionCust::SetSelectedFormIndex(int index)
 {
   if (selectedFormIndex != index)
   {
-<<<<<<< HEAD
-<<<<<<< HEAD
     previousFormItem = currentFormItem;
     previousFormIndex = selectedFormIndex;
-=======
-      Logger::Logf("%d", index);
->>>>>>> 71b496d9 (Backing up changes; working on cross canceling.)
-=======
-    previousFormItem = currentFormItem;
-    previousFormIndex = selectedFormIndex;
->>>>>>> 50425d6e (Adjusting card selection. Added form cancelling properly this time.)
     selectedFormIndex = index;
     Broadcast(index);
   }
@@ -115,7 +106,7 @@ void CardSelectionCust::SetSelectedFormIndex(int index)
 
 CardSelectionCust::CardSelectionCust(const CardSelectionCust::Props& props) :
   props(props),
-  greyscale(Shaders().GetShader(ShaderType::GREYSCALE)),
+  greyscale(*Shaders().GetShader(ShaderType::GREYSCALE)),
   textbox({ 4, 255 }),
   isInView(false),
   isInFormSelect(false),
@@ -408,19 +399,6 @@ bool CardSelectionCust::CursorCancel() {
     return true;
   }
 
-  if (newSelectCount == 0) {
-    newHand = false;
-    if (lockedInFormIndex != GetSelectedFormIndex()) {
-      currentFormItem.setTexture(*previousFormItem.getTexture());
-      SetSelectedFormIndex(previousFormIndex);
-      selectedFormRow = -1;
-
-      // This is also where beastout card would be removed from queue
-      // when beastout is available
-      return true;
-    }
-  }
-
   // Unqueue all cards buckets
   if (newSelectCount > 0) {
     newSelectQueue[--newSelectCount]->state = Bucket::state::staged;
@@ -429,10 +407,7 @@ bool CardSelectionCust::CursorCancel() {
     newSelectCount = 0;
   }
   
-<<<<<<< HEAD
-=======
 
->>>>>>> 71b496d9 (Backing up changes; working on cross canceling.)
   // Everything is selectable again
   for (int i = 0; i < cardCount; i++) {
     queue[i].state = Bucket::state::staged;
@@ -442,15 +417,16 @@ bool CardSelectionCust::CursorCancel() {
     newSelectQueue[i]->state = Bucket::state::queued;
   }
 
-<<<<<<< HEAD
-=======
   if (newSelectCount == 0) {
     newHand = false;
     if (lockedInFormIndex != GetSelectedFormIndex()) {
         currentFormItem.setTexture(*previousFormItem.getTexture());
         SetSelectedFormIndex(previousFormIndex);
         selectedFormRow = -1;
+<<<<<<< HEAD
         
+=======
+>>>>>>> development
     }
     // This is also where beastout card would be removed from queue
     // when beastout is available
@@ -459,7 +435,6 @@ bool CardSelectionCust::CursorCancel() {
     return true;
   }
 
->>>>>>> 71b496d9 (Backing up changes; working on cross canceling.)
   /*
     Compatible card states are built upon adding cards from the last available card states.
     The only way to "revert" to the last compatible card states is to step through the already selected
@@ -617,7 +592,6 @@ bool CardSelectionCust::TextBoxConfirmQuestion() {
 }
 
 void CardSelectionCust::GetNextCards() {
-  emblem.Reset();
 
   bool selectFirstDarkCard = true;
 
@@ -744,9 +718,9 @@ void CardSelectionCust::draw(sf::RenderTarget & target, sf::RenderStates states)
     icon.SetShader(nullptr);
 
     if (queue[i].state == Bucket::state::voided) {
-      icon.SetShader(greyscale);
+      icon.SetShader(&greyscale);
       auto statesCopy = states;
-      statesCopy.shader = greyscale;
+        statesCopy.shader = &greyscale;
 
       target.draw(icon,statesCopy);
 
@@ -783,10 +757,10 @@ void CardSelectionCust::draw(sf::RenderTarget & target, sf::RenderStates states)
       cardCard.SetShader(nullptr);
 
       if (queue[cursorPos + (5 * cursorRow)].state == Bucket::state::voided) {
-        cardCard.SetShader(greyscale);
+        cardCard.SetShader(&greyscale);
 
         auto statesCopy = states;
-        statesCopy.shader = greyscale;
+        statesCopy.shader = &greyscale;
 
         target.draw(cardCard, statesCopy);
 
