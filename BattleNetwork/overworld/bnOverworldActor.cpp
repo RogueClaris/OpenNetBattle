@@ -265,6 +265,18 @@ void Overworld::Actor::SetSolid(bool solid)
   this->solid = solid;
 }
 
+int Overworld::Actor::getDistance(sf::Vector2f pos1, sf::Vector2f pos2) {
+    int distance = 0;
+    if (state != MovementState::idle) {
+        distance = sqrt(powf(pos2.x - pos1.x, 2) + powf(pos2.y - pos1.y, 2));
+    }
+    return distance;
+}
+
+Overworld::Actor::MovementState Overworld::Actor::getMoveState() {
+    return state;
+}
+
 float Overworld::Actor::GetCollisionRadius()
 {
   return collisionRadius;

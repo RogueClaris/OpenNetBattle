@@ -1,23 +1,17 @@
 #include "bnTwoMettaurMob.h"
 #include "bnField.h"
 #include "bnWebClientMananger.h"
-#include "bnCardUUIDs.h"
+#include "bnBuiltInCards.h"
 #include "bnFadeInState.h"
 #include "bnOwnedCardsUI.h"
 
 namespace {
   static std::vector<Battle::Card> GenCards() {
-    auto list = BuiltInCards::AsList;
+    auto list = BuiltInCards::cardList;
 
     int rand_size = (rand() % 4)+1;
 
     std::vector<Battle::Card> cards;
-
-    while (rand_size > 0) {
-      int offset = rand() % list.size();
-      cards.push_back(WEBCLIENT.MakeBattleCardFromWebCardData(*(list.begin() + offset)));
-      rand_size--;
-    }
 
     return cards;
   }
@@ -35,15 +29,6 @@ TwoMettaurMob::~TwoMettaurMob()
 Mob* TwoMettaurMob::Build() {
   // Construct a new mob 
   Mob* mob = new Mob(field);
-
-  // Assign rewards based on rank
-  mob->RegisterRankedReward(1, BattleItem(WEBCLIENT.MakeBattleCardFromWebCardData(BuiltInCards::Reflect_A)));
-  mob->RegisterRankedReward(6, BattleItem(WEBCLIENT.MakeBattleCardFromWebCardData(BuiltInCards::Cannon_A)));
-
-  //mob->RegisterRankedReward(1, BattleItem(Battle::Card(72, 99, 'C', 60, Element::none, "Rflctr1", "Defends and reflects", "Press A to bring up a shield that protects you and reflects damage.", 2)));
-  //mob->RegisterRankedReward(1, BattleItem(Battle::Card(72, 99, 'B', 60, Element::none, "Rflctr1", "Defends and reflects", "Press A to bring up a shield that protects you and reflects damage.", 2)));
-  //mob->RegisterRankedReward(3, BattleItem(Battle::Card(72, 99, 'A', 60, Element::none, "Rflctr1", "Defends and reflects", "Press A to bring up a shield that protects you and reflects damage.", 2)));
-  //mob->RegisterRankedReward(1, BattleItem(Battle::Card(83, 158, 'K', 0, Element::none, "CrckPanel", "Cracks a panel", "Cracks the tiles in the column immediately in front", 2)));
 
   int count = 3;
 

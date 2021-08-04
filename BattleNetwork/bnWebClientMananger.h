@@ -83,7 +83,7 @@ public:
   void SaveSession(const std::string& inpath);
   void SetKey(const std::string& key, const std::string& value);
   const std::string GetValue(const std::string& key);
-  const bool LoadSession(const std::string& outpath, WebAccounts::AccountState* accountPtr);
+  const bool LoadSession(const std::string& outpath);
   void UseCachedAccount(const WebAccounts::AccountState& account);
   void ShutdownAllTasks();
 };

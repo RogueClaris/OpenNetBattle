@@ -10,6 +10,7 @@
 #include "bnOverworldMap.h"
 #include "../bnGameOverScene.h"
 #include "../bnCardFolderCollection.h"
+#include "../bnBuiltInProgramAdvances.h"
 #include <stdlib.h>
 
 using namespace swoosh::types;
@@ -20,21 +21,34 @@ Overworld::GameArea::GameArea(
     swoosh::ActivityController& controller,
     const std::string& mapPath,
     sf::Vector3f entryPos,
-    Direction mapDirection
-)
+    Direction mapDirection,
+    bool isLoad)
     :
-    SceneBase(controller)
+    Homepage(controller)
 {
-    LoadMap(FileUtil::Read(mapPath));
+    if (!isLoad) {
+        LoadMap(FileUtil::Read(mapPath));
 
-    auto& map = GetMap();
+        auto& map = GetMap();
 
-    // spawn in the player
-    auto player = GetPlayer();
-    auto& command = GetTeleportController().TeleportIn(player, entryPos, mapDirection, true);
-    command.onFinish.Slot([=] {
-        GetPlayerController().ControlActor(player);
-        });
+        // spawn in the player
+        auto player = GetPlayer();
+        auto& command = GetTeleportController().TeleportIn(player, entryPos, mapDirection, true);
+        command.onFinish.Slot([=] {
+            GetPlayerController().ControlActor(player);
+            });
+    }
+    else {
+        auto sesh = GetPlayerSession();
+        auto& map = sesh->area;
+        if (map.areaMap == nullptr) {
+            LoadMap(FileUtil::Read(map.filePath));
+        }
+        else {
+            map.areaMap;
+        }
+    }
+    
 }
 
 Overworld::GameArea::~GameArea() {
@@ -70,46 +84,52 @@ void Overworld::GameArea::onUpdate(double elapsed)
           });
   }
   else {
-      if (GetTeleportController().IsComplete() && !map.isEncounter) {
-          if (player->GetAnimationString().find("IDLE")) {
-              map.updateBattleSteps();
-              if (map.CurrentBattleSteps >= map.BattleSteps) {
-                  srand((unsigned)GetTickCount64());
-                  map.nextBattleIndex = std::floor(rand() % map.nextBattleList.size());
-                  std::string checkMob = map.nextBattleList.at(map.nextBattleIndex);
-                  Mob* mob = MobRegistration::GetInstance().Find(checkMob).GetMob();
-                  Audio().Play(AudioType::PRE_BATTLE, AudioPriority::high);
-                  Audio().StopStream();
-                  auto& meta = NAVIS.At(GetCurrentNavi());
-                  const std::string& image = meta.GetMugshotTexturePath();
-                  const std::string& mugshotAnim = meta.GetMugshotAnimationPath();
-                  const std::string& emotionsTexture = meta.GetEmotionsTexturePath();
-                  auto mugshot = Textures().LoadTextureFromFile(image);
-                  auto emotions = Textures().LoadTextureFromFile(emotionsTexture);
-                  Player* player = meta.GetNavi();
-                  if (!mob->GetBackground()) {
-                      mob->SetBackground(GetBackground());
+      if (GetTeleportController().IsComplete() && map.isEncounter) {
+          if (player->getMoveState() != Overworld::Actor::MovementState::idle) {
+              if (player->getDistance(player->lastPos, player->getPosition()) > 0) {
+                  map.updateBattleSteps();
+                  if (map.CurrentBattleSteps >= map.BattleSteps) {
+                      srand((unsigned)GetTickCount64());
+                      map.nextBattleIndex = std::floor(rand() % map.nextBattleList.size());
+                      std::string checkMob = map.nextBattleList.at(map.nextBattleIndex);
+                      Mob* mob = MobRegistration::GetInstance().Find(checkMob).GetMob();
+                      Audio().Play(AudioType::PRE_BATTLE, AudioPriority::high);
+                      Audio().StopStream();
+                      auto& meta = NAVIS.At(GetCurrentNavi());
+                      const std::string& image = meta.GetMugshotTexturePath();
+                      const std::string& mugshotAnim = meta.GetMugshotAnimationPath();
+                      const std::string& emotionsTexture = meta.GetEmotionsTexturePath();
+                      auto mugshot = Textures().LoadTextureFromFile(image);
+                      auto emotions = Textures().LoadTextureFromFile(emotionsTexture);
+                      Player* player = meta.GetNavi();
+                      if (!mob->GetBackground()) {
+                          mob->SetBackground(GetBackground());
+                      }
+                      PA& PhotonArt = GetProgramAdvance();
+                      auto folder = *GetSelectedFolder();
+                      if (folder) {
+                          folder = folder->Clone();
+                          folder->Shuffle();
+                      }
+                      MobBattleProperties props{
+                            { *player, PhotonArt, folder, mob->GetField(), mob->GetBackground() },
+                            MobBattleProperties::RewardBehavior::take,
+                            { mob },
+                            sf::Sprite(*mugshot),
+                            mugshotAnim,
+                            emotions,
+                      };
+                      using effect = segue<WhiteWashFade>;
+                      auto handleBattleResult = [this](const BattleResults& results) {
+                          GetPlayerSession()->health = results.playerHealth; //BN2+ HP retention; remove for BN1 HP restoration.
+                      };
+                      getController().push<effect::to<MobBattleScene>>(props, handleBattleResult);
+                      GetPlayerController().ListenToInputEvents(false);
+                      goToBattle = true;
                   }
-                  PA PhotonArt;
-                  CardFolderCollection collection;
-                  CardFolder* folder = collection.GetEquippedFolder()->Clone();
-                  MobBattleProperties props{
-                        { *player, PhotonArt, folder, mob->GetField(), mob->GetBackground() },
-                        MobBattleProperties::RewardBehavior::take,
-                        { mob },
-                        sf::Sprite(*mugshot),
-                        mugshotAnim,
-                        emotions,
-                  };
-                  using effect = segue<WhiteWashFade>;
-                  auto handleBattleResult = [this](const BattleResults& results) {
-                      GetPlayerSession()->health = results.playerHealth; //BN2+ HP retention; remove for BN1 HP restoration.
-                  };
-                  getController().push<effect::to<MobBattleScene>>(props, handleBattleResult);
-                  GetPlayerController().ListenToInputEvents(false);
-                  goToBattle = true;
               }
           }
+          player->lastPos = player->getPosition();
       }
   }
 }

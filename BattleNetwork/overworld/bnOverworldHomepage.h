@@ -5,7 +5,7 @@
 #include "bnOverworldPollingPacketProcessor.h"
 
 namespace Overworld {
-  class Homepage final : public SceneBase {
+  class Homepage : public SceneBase {
   private:
     bool scaledmap{ false }, clicked{ false };
     bool infocus{ false };

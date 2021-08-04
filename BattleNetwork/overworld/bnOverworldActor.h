@@ -71,6 +71,12 @@ namespace Overworld {
 
     Actor(Actor&&) noexcept;
 
+    int getDistance(sf::Vector2f pos1, sf::Vector2f pos2); //Calculate the distance between two positions.
+
+    sf::Vector2f lastPos{ 0.0, 0.0 }; //Store a position. Preferably not the one they're currently at.
+
+    MovementState getMoveState(); //Get the current movement state - idle, running, walking.
+
     /**
     * @brief Deconstructor
     */

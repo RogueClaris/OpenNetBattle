@@ -9,11 +9,13 @@
 
 #include "bnOverworldSceneBase.h"
 #include "bnOverworldTiledMapLoader.h"
+#include "bnOverworldPlayerSessionWriter.h"
 
 #include "../bnWebClientMananger.h"
 #include "../Android/bnTouchArea.h"
 #include "../bnCurrentTime.h"
 
+#include "../bnBuiltInProgramAdvances.h"
 #include "../bnFolderScene.h"
 #include "../bnSelectNaviScene.h"
 #include "../bnSelectMobScene.h"
@@ -216,22 +218,9 @@ void Overworld::SceneBase::onUpdate(double elapsed) {
         return; // keep the screen looking the same when we come back
 #endif
 
-    if (WEBCLIENT.IsLoggedIn() && accountCommandResponse.valid() && is_ready(accountCommandResponse)) {
-        try {
-            webAccount = accountCommandResponse.get();
-            Logger::Logf("You have %i folders on your account", webAccount.folders.size());
-            WEBCLIENT.CacheTextureData(webAccount);
-            folders = CardFolderCollection::ReadFromWebAccount(webAccount);
-            programAdvance = PA::ReadFromWebAccount(webAccount);
-
-            NaviEquipSelectedFolder();
-
-            // Replace
-            WEBCLIENT.SaveSession("profile.bin");
-        }
-        catch (const std::runtime_error& e) {
-            Logger::Logf("Could not fetch account.\nError: %s", e.what());
-        }
+    programAdvance = PA();
+    for (const auto& [key, value] : BuiltInProgramAdvances::advanceList) {
+        programAdvance.RegisterPA(value);
     }
 
     // update the web connectivity icon
@@ -1118,7 +1107,7 @@ std::optional<CardFolder*> Overworld::SceneBase::GetSelectedFolder() {
         return folder;
     }
     else {
-        return {};
+        return new CardFolder();
     }
 }
 

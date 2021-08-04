@@ -56,7 +56,7 @@ BattleResultsWidget::BattleResultsWidget(const BattleResults& results, Mob* mob)
 
 
   if (item) {
-    rewardCard = sf::Sprite(*WEBCLIENT.GetImageForCard(item->GetUUID()));
+    rewardCard = sf::Sprite(*Textures().LoadTextureFromFile("resources/cardimages/"+item->GetCard().GetShortName()+".png"));
 
     rewardCard.setTextureRect(sf::IntRect(0,0,56,48));
 

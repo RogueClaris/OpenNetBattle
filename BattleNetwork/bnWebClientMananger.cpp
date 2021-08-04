@@ -182,9 +182,6 @@ void WebClientManager::SaveSession(const std::string& outpath)
     // Save version number
     out.write(version, version_len);
 
-    // last API fetch
-    out.write((char*)&account.lastFetchTimestamp, sizeof(long long));
-
     // username
     size_t username_len = this->username.size();
     out.write((char*)&username_len, sizeof(size_t));
@@ -431,9 +428,8 @@ const std::string WebClientManager::GetValue(const std::string& key)
   return res;
 }
 
-const bool WebClientManager::LoadSession(const std::string& inpath, WebAccounts::AccountState* accountPtr)
+const bool WebClientManager::LoadSession(const std::string& inpath)
 {
-  WebAccounts::AccountState& account = *accountPtr;
 
   std::ifstream in(inpath, std::ios::binary);
   if (in.is_open()) {
@@ -449,9 +445,6 @@ const bool WebClientManager::LoadSession(const std::string& inpath, WebAccounts:
     if(versionStr != selfVersionStr) {
       return false;
     }
-
-    // last API fetch
-    in.read((char*)&account.lastFetchTimestamp, sizeof(long long));
 
     // username
     size_t username_len = 0;
