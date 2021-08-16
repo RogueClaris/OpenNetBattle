@@ -43,4 +43,6 @@ public:
   * @brief Does nothing
   */
   void OnDelete() override;
-}; 
+
+  void Thunder::OnCollision(const Character*);
+};

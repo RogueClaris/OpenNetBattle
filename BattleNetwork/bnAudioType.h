@@ -57,5 +57,6 @@ enum class AudioType : int {
   TIME_FREEZE,
   METEOR,
   DEFORM,
+  DREAMSWORD,
   AUDIO_TYPE_SIZE
 };

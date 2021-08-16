@@ -254,7 +254,7 @@ void DownloadScene::DownloadCardList(const Poco::Buffer<char>& buffer)
     cardData->modelId = reader.ReadString<uint16_t>(buffer);
 
     // Upload
-    WEBCLIENT.UploadCardData(id, iconObj, textureObj, cardData, props);
+    WEBCLIENT.UploadCardData(id, iconObj, textureObj);
     cardsToDownload[id] = "Complete";
   }
 

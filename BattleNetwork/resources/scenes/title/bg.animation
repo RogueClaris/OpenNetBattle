@@ -1,0 +1,4 @@
+imagePath="C:/Users/Owner/Desktop/ONB Dev/OpenNetBattle-Singleplayer/BattleNetwork/resources/scenes/title/bg.png"
+
+animation state="BG"
+frame duration="0.05" x="0" y="0" w="256" h="160" originx="0" originy="0"

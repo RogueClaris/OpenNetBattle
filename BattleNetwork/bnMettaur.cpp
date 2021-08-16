@@ -22,7 +22,11 @@ Mettaur::Mettaur(Rank _rank) :
 
   animation = CreateComponent<AnimationComponent>(this);
 
-  if (GetRank() == Rank::_2) {
+  if (GetRank() == Rank::_1) {
+      SetHealth(40);
+      setTexture(Textures().LoadTextureFromFile("resources/mobs/mettaur/mettaur.png"));
+  }
+  else if (GetRank() == Rank::_2) {
     SetHealth(80);
     setTexture(Textures().LoadTextureFromFile("resources/mobs/mettaur/mettaur2.png"));
   }
@@ -43,7 +47,8 @@ Mettaur::Mettaur(Rank _rank) :
   }
   else {
     // Rank 1
-    SetHealth(40);
+    SetName("DEBUG");
+    SetHealth(1);
     setTexture(Textures().LoadTextureFromFile("resources/mobs/mettaur/mettaur.png"));
   }
 

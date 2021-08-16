@@ -14,8 +14,9 @@
 using std::to_string;
 
 SelectedCardsUI::SelectedCardsUI(Character* owner) :
-  CardUsePublisher(), 
-  UIComponent(owner)
+    CardUsePublisher(),
+    UIComponent(owner),
+    TemporaryResourceManager( TextureResourceManager() )
 {
   cardCount = curr = 0;
   auto iconRect = sf::IntRect(0, 0, 14, 14);
@@ -24,7 +25,6 @@ SelectedCardsUI::SelectedCardsUI(Character* owner) :
 
   frame.setTexture(LOAD_TEXTURE(CHIP_FRAME));
   frame.setScale(sf::Vector2f(2.f, 2.f));
-
   firstFrame = true; // first time drawn, update positions
 }
 
@@ -33,7 +33,7 @@ SelectedCardsUI::~SelectedCardsUI() {
 
 void SelectedCardsUI::draw(sf::RenderTarget & target, sf::RenderStates states) const {
   if (this->IsHidden()) return;
-
+  auto TagToBlock = std::initializer_list<std::string>{ "Loaded" };
   const Entity* owner = GetOwner();
 
   //auto this_states = states;
@@ -64,8 +64,7 @@ void SelectedCardsUI::draw(sf::RenderTarget & target, sf::RenderStates states) c
     target.draw(frame, states);
 
     // Grab the ID of the card and draw that icon from the spritesheet
-    auto* nar = new TextureResourceManager();
-    icon.setTexture(nar->LoadTextureFromFile("resources/cardicons"+selectedCards[drawOrderIndex]->GetShortName()+".png"));
+    icon.setTexture(WEBCLIENT.GetIconForCard(selectedCards[drawOrderIndex]->GetUUID()));
 
     target.draw(icon, states);
   }
@@ -89,10 +88,10 @@ void SelectedCardsUI::LoadCards(Battle::Card ** incoming, int size) {
   curr = 0;
 }
 
-void SelectedCardsUI::UseNextCard() {
+bool SelectedCardsUI::UseNextCard() {
   Character* owner = this->GetOwnerAs<Character>();
 
-  if (!owner) return;
+  if (!owner) return false;
 
   const auto actions = owner->AsyncActionList();
   bool hasNextCard = curr < cardCount;
@@ -107,7 +106,7 @@ void SelectedCardsUI::UseNextCard() {
   canUseCard = canUseCard && hasNextCard;
 
   if (!canUseCard) {
-    return;
+    return false;
   }
 
   auto card = selectedCards[curr];
@@ -120,6 +119,7 @@ void SelectedCardsUI::UseNextCard() {
 
   // add a peek event to the action queue
   owner->AddAction(PeekCardEvent{ this }, ActionOrder::voluntary);
+  return true;
 }
 
 void SelectedCardsUI::Broadcast(const Battle::Card& card, Character& user)

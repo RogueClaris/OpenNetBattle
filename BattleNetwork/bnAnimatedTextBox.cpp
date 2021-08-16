@@ -148,7 +148,8 @@ void AnimatedTextBox::CompleteCurrentBlock() {
 void AnimatedTextBox::DequeMessage() {
   if (messages.size() == 0) return;
 
-  delete *messages.begin(); // TODO: use shared ptrs
+  //delete *messages.begin(); // TODO: use shared ptrs
+  //Claris Edit: was causing "corruption in the heap" to delete this way. May be unique to my branch.
   messages.erase(messages.begin());
   anims.erase(anims.begin());
   mugshots.erase(mugshots.begin());

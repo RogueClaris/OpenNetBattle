@@ -23,7 +23,12 @@ Metrid::Metrid(Rank _rank)
   animationComponent->SetPath(RESOURCE_PATH);
   animationComponent->Reload();
 
-  if (GetRank() == Rank::_2) {
+  if (GetRank() == Rank::_1) {
+      SetHealth(150);
+      animationComponent->SetPlaybackSpeed(1.0);
+      animationComponent->SetAnimation("MOB_IDLE_1");
+  }
+  else if (GetRank() == Rank::_2) {
     SetHealth(200);
     SetName("Metrod");
     animationComponent->SetPlaybackSpeed(1.2);
@@ -36,8 +41,9 @@ Metrid::Metrid(Rank _rank)
     animationComponent->SetAnimation("MOB_IDLE_3");
   }
   else {
+    SetName("DEBUG");
     animationComponent->SetAnimation("MOB_IDLE_1");
-    SetHealth(150);
+    SetHealth(1);
   }
 
   hitHeight = 60;

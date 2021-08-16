@@ -75,20 +75,24 @@ Aura::Aura(Aura::Type type, Character* owner) :
     health = 200;
     break;
   case Aura::Type::AURA_1000:
-    health = 1000;;
+    health = 1000;
     break;
   case Aura::Type::BARRIER_10:
+    health = 10;
+    persist = true;
+    break;
+  case Aura::Type::BARRIER_100:
     health = 100;
     persist = true;
     break;
   case Aura::Type::BARRIER_200:
-    health = 200;
-    persist = true;
-    break;
+      health = 200;
+      persist = true;
+      break;
   case Aura::Type::BARRIER_500:
-    health = 500;
-    persist = true;
-    break;
+      health = 500;
+      persist = true;
+      break;
   }
 
   currHP = health;
@@ -164,7 +168,7 @@ void Aura::OnReplace()
     GetOwner()->RemoveNode(fx);
   }
 
-  RemoveDefenseRule();
+  defenseRuleRemoved = true;
 
   Eject();
 }
@@ -242,15 +246,19 @@ Aura::VisualFX::VisualFX(Entity* owner, Aura::Type type) :
     animation.SetAnimation("AURA_1000");
     break;
   case Aura::Type::BARRIER_10:
-    animation.SetAnimation("BARRIER_10");
+    animation.SetAnimation("Barrier 10");
+    break;
+  case Aura::Type::BARRIER_100:
+    animation.SetAnimation("Barrier 100");
     break;
   case Aura::Type::BARRIER_200:
-    animation.SetAnimation("BARRIER_200");
+    animation.SetAnimation("Barrier 200");
     break;
   case Aura::Type::BARRIER_500:
-    animation.SetAnimation("BARRIER_500");
-    break;
+      animation.SetAnimation("Barrier 500");
+      break;
   }
+
 
   animation << Animator::Mode::Loop;
   animation.Update(0, aura->getSprite());

@@ -304,6 +304,13 @@ TextureResourceManager::TextureResourceManager() {
   // config ui
   paths.push_back("resources/scenes/config/audio.png");
   paths.push_back("resources/scenes/config/end_btn.png");
+
+  //Claris additions
+  
+  // spells
+  paths.push_back("resources/spells/spell_zapring.png");
+  // bunny family
+  paths.push_back("resources/mobs/bunny/bunny.png");
 }
 
 TextureResourceManager::~TextureResourceManager() {

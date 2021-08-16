@@ -112,8 +112,7 @@ void PlayerSelectedCardsUI::draw(sf::RenderTarget& target, sf::RenderStates stat
         target.draw(frame, states);
 
         // Grab the ID of the card and draw that icon from the spritesheet
-        auto* nar = new TextureResourceManager();
-        icon.setTexture(nar->LoadTextureFromFile("resources/cardicons/"+selectedCards[drawOrderIndex]->GetShortName()+".png"));
+        icon.setTexture(WEBCLIENT.GetIconForCard(selectedCards[drawOrderIndex]->GetUUID()));
 
         target.draw(icon, states);
       }

@@ -11,10 +11,11 @@
 #include <random>
 
 BattleResultsWidget::BattleResultsWidget(const BattleResults& results, Mob* mob) :
-  cardMatrixIndex(0), 
+  cardMatrixIndex(0),
   isRevealed(false),
   playSoundOnce(false),
-  rewardIsCard(false), 
+  rewardIsCard(false),
+  rewardIsCash(false),
   finalHealth(results.playerHealth),
   item(nullptr), 
   score(results.score), 
@@ -55,17 +56,27 @@ BattleResultsWidget::BattleResultsWidget(const BattleResults& results, Mob* mob)
   star.setScale(2.f, 2.f);
 
 
-  if (item) {
-    rewardCard = sf::Sprite(*Textures().LoadTextureFromFile("resources/cardimages/"+item->GetCard().GetShortName()+".png"));
-
-    rewardCard.setTextureRect(sf::IntRect(0,0,56,48));
-
+  if (item) {    
     if (item->IsCard()) {
-      rewardIsCard = true;
+        rewardCard = sf::Sprite(*Textures().LoadTextureFromFile("resources/cardimages/" + item->GetCard().GetShortName() + ".png"));
+        rewardCard.setTextureRect(sf::IntRect(0, 0, 56, 48));
+        rewardIsCard = true;
 
-      cardCode.setPosition(2.f*114.f, 216.f);
-      cardCode.SetString(std::string() + item->GetCardCode());
-      cardCode.setScale(2.f, 2.f);
+        cardCode.setPosition(2.f*114.f, 216.f);
+        cardCode.SetString(std::string() + item->GetCardCode());
+        cardCode.setScale(2.f, 2.f);
+    }
+    else if (item->IsCash()) {
+        int* ptr = (int*)&results.moniesToGet;
+        *ptr = std::stoi(item->GetUUID());
+
+        rewardCard = sf::Sprite(*Textures().LoadTextureFromFile("resources/cardimages/zenny.png"));
+        rewardCard.setTextureRect(sf::IntRect(0, 0, 56, 48));
+        rewardIsCash = true;
+
+        cardCode.setPosition(2.f * 114.f, 216.f);
+        cardCode.SetString("Z");
+        cardCode.setScale(2.f, 2.f);
     }
   }
   else {
@@ -87,7 +98,13 @@ BattleResultsWidget::BattleResultsWidget(const BattleResults& results, Mob* mob)
   reward.setScale(2.f, 2.f);
 
   if (item) {
-    reward.SetString(item->GetName());
+      if (item->IsCard()) {
+          reward.SetString(item->GetName());
+      }
+      else if (item->IsCash())
+      {
+          reward.SetString(item->GetUUID());
+      }
   }
   else {
     reward.SetString("No Data");
@@ -267,6 +284,16 @@ void BattleResultsWidget::Draw(sf::RenderTarget& surface) {
           cardCode.setPosition(codePos);
           cardCode.SetColor(sf::Color::White);
           surface.draw(cardCode);
+        }
+        else if (rewardIsCash) {
+            auto codePos = cardCode.getPosition();
+            cardCode.setPosition(codePos.x + 2.f, codePos.y + 2.f);
+            cardCode.SetColor(sf::Color(80, 72, 88));
+            surface.draw(cardCode);
+
+            cardCode.setPosition(codePos);
+            cardCode.SetColor(sf::Color::White);
+            surface.draw(cardCode);
         }
       }
     }

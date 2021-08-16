@@ -121,7 +121,7 @@ namespace Overworld {
     }
 
     //
-    // Start these task at the beginning
+    // Start these tasks at the beginning
     //
 
     auto& t0f = easeInTimer.at(frames(0));
@@ -475,7 +475,7 @@ namespace Overworld {
 
         // coins shadow
         infoText.SetColor(shadowColor);
-        infoText.SetString(std::to_string(session->money) + "$");
+        infoText.SetString(std::to_string(session->money) + "Z");
         infoText.setOrigin(infoText.GetLocalBounds().width, 0);
         infoText.setPosition(214 + 1, 57 + 1);
         target.draw(infoText, states);

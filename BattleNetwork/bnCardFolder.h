@@ -17,7 +17,7 @@
 class CardFolder {
 private:
   std::vector<Battle::Card*> folderList; /*!< Cards */
-  int folderSize; /*!< Size of the folder */
+  int folderSize = 0; /*!< Size of the folder */
   int initialSize; /*!< Start of the folder size */
   std::vector<std::string> errors; /*!< Error messages from folder source provider*/
 public:
@@ -67,10 +67,20 @@ public:
   Battle::Card* Next();
   
   /**
-   * @brief The remaining size of the folder 
+   * @brief The remaining size of the folder
    * @return int
    */
   const int GetSize() const;
+
+  /**
+   * @brief Reduce the remaining size.
+   */
+  Battle::Card* GetCardAt(int index) {
+      if (index < 0 || index > folderSize) {
+          return nullptr;
+      }
+      return folderList[index];
+  };
   
   /**
    * @brief Copies error messages into the folder

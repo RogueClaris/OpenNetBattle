@@ -111,7 +111,13 @@ public:
 
     return true;
   }
- 
+
+  /**
+  *@brief Get the folder order.
+  */
+  std::vector<std::string> GetFolderOrder() {
+      return order;
+  }
   /**
    * @brief Get a list of the folder names in order
    * @return std::vector<std::string>

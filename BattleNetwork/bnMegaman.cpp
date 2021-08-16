@@ -23,7 +23,7 @@ Megaman::Megaman() : Player() {
   PaletteSwap* pswap = CreateComponent<PaletteSwap>(this);
   pswap->SetBase(basePallete);
 
-  SetHealth(900);
+  SetHealth(100); //Claris change: set starter HP to 100.
   SetName("Megaman");
   SetHeight(48.f);
 
@@ -34,12 +34,6 @@ Megaman::Megaman() : Player() {
   }
 
   setTexture(Textures().LoadTextureFromFile(path));
-
-  AddForm<TenguCross>()->SetUIPath("resources/navis/megaman/forms/tengu_entry.png");
-  AddForm<HeatCross>()->SetUIPath("resources/navis/megaman/forms/heat_entry.png");
-  AddForm<ElecCross>()->SetUIPath("resources/navis/megaman/forms/elec_entry.png");
-  AddForm<TomahawkCross>()->SetUIPath("resources/navis/megaman/forms/hawk_entry.png");
-  AddForm<ForteCross>()->SetUIPath("resources/navis/megaman/forms/forte_entry.png");
 
   // First sprite on the screen should be default player stance
   SetAnimation("PLAYER_IDLE");
@@ -391,6 +385,8 @@ void TomahawkCross::OnActivate(Player& player)
   }
 
   player.AddNode(overlay);
+
+  player.SetElement(Element::sword);
 
   sync.anim = &overlayAnimation;
   sync.node = overlay;

@@ -425,7 +425,6 @@ void Field::SetAt(int _x, int _y, Team _team) {
 Battle::Tile* Field::GetAt(int _x, int _y) const {
   if (_x < 0 || _x > 7) return nullptr;
   if (_y < 0 || _y > 4) return nullptr;
-
   return tiles[_y][_x];
 }
 

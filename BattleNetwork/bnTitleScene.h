@@ -5,6 +5,10 @@
 #include "bnSpriteProxyNode.h"
 #include "bnFont.h"
 #include "bnText.h"
+#include "bnCustomBackground.h"
+#include "overworld/bnOverworldHomepage.h"
+#include "overworld/bnOverworldGameArea.h"
+
 
 class TitleScene final : public LoaderScene {
 private:
@@ -12,6 +16,7 @@ private:
   SpriteProxyNode bgSprite;
   SpriteProxyNode progSprite;
   SpriteProxyNode cursorSprite;
+  CustomBackground bgLoop;
   Font font, startFont;
   Text logLabel, startLabel;
   std::vector<std::string> logs;

@@ -3,6 +3,7 @@
 #include "bnGame.h"
 #include "bnAudioResourceManager.h"
 #include "bnTextureResourceManager.h"
+#include "bnTaskGroup.h"
 
 /**
  * @class GameOverScene
@@ -16,6 +17,7 @@ class GameOverScene : public Scene {
 private:
   float fadeInCooldown; /*!< Fade in time */
   sf::Sprite gameOver; /*!< GAME OVER */
+  sf::Texture gameOverTexture;
   bool leave; /*!< Scene state coming/going flag */
 
 public:
@@ -34,7 +36,7 @@ public:
   void onUpdate(double elapsed);
   
   void onLeave() { ; }
-  void onExit() { ; }
+  void onExit();
   void onEnter() { ; }
   
   void onResume();
@@ -45,5 +47,5 @@ public:
    */
   void onDraw(sf::RenderTexture& surface);
   
-  void onEnd() { ; }
+  void onEnd();
 };

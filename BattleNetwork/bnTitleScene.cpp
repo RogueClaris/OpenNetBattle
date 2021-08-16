@@ -4,7 +4,6 @@
 #include "bnShaderResourceManager.h"
 #include "bnTextureResourceManager.h"
 #include "bnAudioResourceManager.h"
-#include "overworld/bnOverworldHomepage.h"
 
 using namespace swoosh::types;
 
@@ -23,7 +22,8 @@ TitleScene::TitleScene(swoosh::ActivityController& controller, TaskGroup&& tasks
   inLoadState(true),
   ready(false),
   loadMobs(false),
-  LoaderScene(controller, std::move(tasks))
+  LoaderScene(controller, std::move(tasks)),
+  bgLoop(Textures().LoadTextureFromFile("resources/scenes/title/bg.png"), Animation("resources/scenes/title/bg.animation"), sf::Vector2f{ 24.0f, 0.0f })
 {
   // Title screen logo based on region
   std::shared_ptr<sf::Texture> logo;
@@ -43,6 +43,8 @@ TitleScene::TitleScene(swoosh::ActivityController& controller, TaskGroup&& tasks
   logoSprite.setOrigin(logoSprite.getLocalBounds().width / 2, logoSprite.getLocalBounds().height / 2);
   sf::Vector2f logoPos = sf::Vector2f(240.f, 160.f);
   logoSprite.setPosition(logoPos);
+
+
 
   // Log output text
   font = Font(Font::Style::small);
@@ -113,17 +115,18 @@ void TitleScene::onUpdate(double elapsed)
 
     if (Input().Has(InputEvents::pressed_pause)) {
         pressedStart = true;
-        startLabel.SetString("NEW GAME");
     }
+
     if (pressedStart) {
         if (!isRightPressed) {
             startLabel.SetString("NEW GAME");
+            if (Input().Has(InputEvents::pressed_confirm)) {
+                // We want the next screen to be the main menu screen
+                using tx = segue<DiamondTileCircle>::to<Overworld::Homepage>;
+                getController().push<tx>();
+            }
         }
-        if (Input().Has(InputEvents::pressed_confirm) && !isRightPressed) {
-            // We want the next screen to be the main menu screen
-            using tx = segue<DiamondTileCircle>::to<Overworld::Homepage>;
-            getController().push<tx>();
-        }
+        
         if (Input().Has(InputEvents::pressed_ui_right)) {
             isRightPressed = true;
             startLabel.SetString("CONTINUE");
@@ -131,14 +134,19 @@ void TitleScene::onUpdate(double elapsed)
         if (isRightPressed) {
             startLabel.SetString("CONTINUE");
             if (Input().Has(InputEvents::pressed_ui_left)) {
-                isRightPressed = false;
                 startLabel.SetString("NEW GAME");
+                isRightPressed = false;
             }
             if (Input().Has(InputEvents::pressed_confirm)) {
-                Logger::Log("Not a feature yet.");
+                //let's load that damn game!
+                //Logger::Log("Not a feature yet.");
+                auto sesh = Overworld::PlayerSession();
+                using tx = segue<DiamondTileCircle>::to<Overworld::GameArea>;
+                getController().push<tx>("", sf::Vector3f{ 0.0, 0.0, 0.0 }, Direction::none, true, sesh);
             }
         }
     }
+    bgLoop.Update(elapsed);
   }
   catch (std::future_error& err) {
     Logger::Logf("future_error: %s", err.what());
@@ -165,6 +173,7 @@ void TitleScene::onResume()
 
 void TitleScene::onDraw(sf::RenderTexture & surface)
 {
+  surface.draw(bgLoop);
   surface.draw(bgSprite);
   surface.draw(logoSprite);
   surface.draw(startLabel);

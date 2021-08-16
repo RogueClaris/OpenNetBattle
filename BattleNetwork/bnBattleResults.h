@@ -19,6 +19,7 @@ struct BattleResults {
   int counterCount{};
   int score{};
   int playerHealth{};
+  int moniesToGet = 0;
   bool doubleDelete{};
   bool tripleDelete{};
   bool runaway{};
@@ -50,6 +51,7 @@ private:
   bool isRevealed{}; /*!< Flag if modal is revealed */
   bool playSoundOnce{}; /*!< Flag to play sounds once */
   bool rewardIsCard{}; /*!< Is current reward a card */
+  bool rewardIsCash{}; /*!< Is current reward some money */
 
   BattleItem* item{ nullptr }; /*!< The item stored in this modal */
   int score{}; /*!< 1-10 or 11+ as S rank */

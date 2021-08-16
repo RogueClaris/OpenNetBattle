@@ -74,10 +74,8 @@ public:
   const std::string& GetUserName() const;
 
   void UploadCardData(const std::string& uuid,
-    std::shared_ptr<sf::Texture> icon,
-    std::shared_ptr<sf::Texture> image,
-    std::shared_ptr<WebAccounts::Card> data,
-    std::shared_ptr<WebAccounts::CardProperties> model);
+      std::shared_ptr<sf::Texture> icon,
+      std::shared_ptr<sf::Texture> image);
 
   void CacheTextureData(const WebAccounts::AccountState& account);
   void SaveSession(const std::string& inpath);

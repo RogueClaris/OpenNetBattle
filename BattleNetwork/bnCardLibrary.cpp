@@ -4,6 +4,8 @@
 #include "bnTextureResourceManager.h"
 #include <assert.h>
 #include <algorithm>
+#include <optional>
+#include "bnWebClientMananger.h"
 
 CardLibrary::CardLibrary() {
   LoadLibrary();
@@ -26,6 +28,10 @@ CardLibrary::Iter CardLibrary::Begin()
 CardLibrary::Iter CardLibrary::End()
 {
   return library.end();
+}
+
+void CardLibrary::ResetLibrary() {
+    library.clear();
 }
 
 const unsigned CardLibrary::GetSize() const
@@ -69,58 +75,41 @@ const int CardLibrary::GetCountOf(const Battle::Card & card)
 
 
 void CardLibrary::LoadLibrary() {
+    auto TMP = new TextureResourceManager();
+    for (auto& [key, value] : BuiltInCards::cardList) {
+        if (value.IsTaggedAs("Program Advance")) {
+            auto icon = TMP->LoadTextureFromFile("resources/cardicons/Program Advance.png");
+            auto image = TMP->LoadTextureFromFile("resources/cardimages/Program Advance.png");
+            WEBCLIENT.UploadCardData(value.GetUUID(), icon, image);
+        }
+        else if (value.IsTaggedAs("Navi")) {
+            if (value.IsTaggedAs("DS Chip")) {
+                auto icon = TMP->LoadTextureFromFile("resources/cardicons/NaviSummonDS.png");
+                auto image = TMP->LoadTextureFromFile("resources/cardimages/NaviSummonDS.png");
+                WEBCLIENT.UploadCardData(value.GetUUID(), icon, image);
+            }
+            else if (value.IsTaggedAs("SP Chip")) {
+                auto icon = TMP->LoadTextureFromFile("resources/cardicons/NaviSummonSP.png");
+                auto image = TMP->LoadTextureFromFile("resources/cardimages/NaviSummonSP.png");
+                WEBCLIENT.UploadCardData(value.GetUUID(), icon, image);
+            }
+            else {
+                auto icon = TMP->LoadTextureFromFile("resources/cardicons/NaviSummon.png");
+                auto image = TMP->LoadTextureFromFile("resources/cardimages/NaviSummon.png");
+                WEBCLIENT.UploadCardData(value.GetUUID(), icon, image);
+            }
 
-    for (const auto& [key, value] : BuiltInCards::cardList) {
-        AddCard(value);
+        }
+        else {
+            auto icon = TMP->LoadTextureFromFile("resources/cardicons/" + value.GetShortName() + ".png");
+            auto image = TMP->LoadTextureFromFile("resources/cardimages/" + value.GetShortName() + ".png");
+            WEBCLIENT.UploadCardData(value.GetUUID(), icon, image);
+        }
     }
+    
+    delete TMP;
 }
 
 const bool CardLibrary::SaveLibrary(const std::string& path) {
-  /**
-   * Each card has a particular format
-   * Lines beginning with pound '#' are comments and are ignored
-   * Card name="ProtoMan" cardIndex="139" iconIndex="232" damage="120" type="Normal" codes="*,P" desc="Slices all enmy on field" "ProtoMan appears, stops time,\nand teleports to each open enemy striking once." rarity="5"
-   */
-
-  try {
-    FileUtil::WriteStream ws(path);
-
-    ws << "# Saved on " << CurrentTime::AsString() << ws.endl();
-
-    for (auto& card : library) {
-      ws << "Card name=\"" << card.GetShortName() << "\" cardIndex=\""
-         << card.GetUUID() << "\" ";
-      ws << "\" damage=\"" << std::to_string(card.GetDamage()) << "\" ";
-      ws << "type=\"" << GetStrFromElement(card.GetElement()) << "\" ";
-
-      auto codes = CardLibrary::GetCardCodes(card);
-
-      ws << "codes=\"";
-
-      ws << card.GetCode();
-
-      /*unsigned i = 0;
-      for (auto code : codes) {
-        ws << code;
-        i++;
-
-        if (i != codes.size() - 1) ws << ",";
-      }*/
-
-      ws << "\" ";
-
-      ws << "desc=\"" << card.GetDescription() << "\" ";
-      ws << "verbose=\""<< card.GetVerboseDescription() << "\" ";
-
-      ws << ws.endl();
-    }
-
-    Logger::Log(std::string("library saved successfully. Number of cards saved: ") +
-                std::to_string(GetSize()));
-    return true;
-  } catch(std::exception& e) {
-    Logger::Log(std::string("library save failed. Reason: ") + e.what());
-  }
-
   return false;
 }

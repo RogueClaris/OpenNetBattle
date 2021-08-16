@@ -27,7 +27,8 @@ int main(int argc, char** argv) {
 
   // The last screen the player will ever see is the game over screen so it goes 
   // to the bottom of the stack
-  game.push<GameOverScene>();
+  // Claris edit: remove this push to allow pushing to game over, then rewinding to title.
+  //game.push<GameOverScene>();
 
   // Go the the title screen to kick off the rest of the app
   game.push<TitleScene>(game.Boot(options.parse(argc, argv)));

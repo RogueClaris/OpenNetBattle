@@ -46,7 +46,8 @@ private:
     Battle::Card info;
 
   public:
-    PoolBucket(unsigned size, Battle::Card info) : size(size), maxSize(size), info(info) { }
+      //Claris change: instead of Size being equal to the number of cards you're adding, it's equal to the card's maximum count.
+    PoolBucket(unsigned size, Battle::Card info) : size(size), maxSize(info.GetLimit()), info(info) { }
     ~PoolBucket() { }
 
     const bool IsEmpty() const { return size == 0; }

@@ -103,7 +103,6 @@ private:
 #endif
 
   void MakeNewFolder();
-  void DeleteFolder(std::function<void()> onSuccess);
   void RefreshOptions();
 public:  
 

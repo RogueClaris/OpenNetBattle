@@ -38,6 +38,11 @@ Canodumb::Canodumb(Rank _rank) : AI<Canodumb>(this), Character(_rank) {
     animation->SetAnimation("IDLE_3");
     health = 130;
     break;
+  default:
+    SetName("DEBUG");
+    animation->SetAnimation("IDLE_3");
+    health = 1;
+    break;
   }
 
   virusBody = new DefenseVirusBody();

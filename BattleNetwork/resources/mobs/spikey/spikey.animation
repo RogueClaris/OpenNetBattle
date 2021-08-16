@@ -1,0 +1,18 @@
+imagePath="C:/Users/Owner/Desktop/ONB Dev/OpenNetBattle-Singleplayer/BattleNetwork/resources/mobs/spikey/spikey.png"
+
+animation state="IDLE_1"
+frame duration="0.125" x="794" y="4" w="70" h="54" originx="35" originy="50"
+frame duration="0.125" x="719" y="6" w="69" h="52" originx="35" originy="48"
+frame duration="0.125" x="643" y="8" w="69" h="50" originx="35" originy="46"
+frame duration="0.125" x="567" y="6" w="69" h="52" originx="35" originy="48"
+
+animation state="ATTACK_1"
+frame duration="0.125" x="877" y="74" w="69" h="54" originx="35" originy="50"
+frame duration="0.5" x="801" y="76" w="69" h="52" originx="35" originy="48"
+frame duration="0.05" x="725" y="78" w="69" h="50" originx="35" originy="46"
+frame duration="0.05" x="643" y="73" w="75" h="55" originx="43" originy="51"
+frame duration="0.05" x="563" y="73" w="75" h="56" originx="43" originy="51"
+frame duration="0.5" x="483" y="73" w="75" h="55" originx="43" originy="51"
+
+animation state="MOVE_1"
+frame duration="0.05" x="875" y="136" w="69" h="54" originx="35" originy="50"

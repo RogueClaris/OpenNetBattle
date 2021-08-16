@@ -47,7 +47,7 @@
  <objectgroup id="13" name="Object Layer 1">
   <object id="23" gid="237" x="384" y="192" width="57" height="33"/>
   <object id="25" gid="157" x="512" y="512" width="64" height="39"/>
-  <object id="40" name="Net Warp" gid="2147483655" x="992" y="640" width="64" height="40">
+  <object id="40" name="Net Warp" gid="2147483655" x="992" y="640" width="64" height="40" visible="0">
    <properties>
     <property name="Destination" value="resources/ow/maps/Netopia 4.tmx"/>
     <property name="X" type="float" value="4.5"/>
@@ -55,7 +55,7 @@
     <property name="Z" type="float" value="4"/>
    </properties>
   </object>
-  <object id="41" name="Net Warp" gid="10" x="512" y="32" width="64" height="40">
+  <object id="41" name="Net Warp" gid="10" x="512" y="32" width="64" height="40" visible="0">
    <properties>
     <property name="Destination" value="resources/ow/maps/Netopia 3.tmx"/>
     <property name="X" type="float" value="17.5"/>

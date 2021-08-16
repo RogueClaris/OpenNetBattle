@@ -289,7 +289,7 @@ void FolderScene::onUpdate(double elapsed) {
     optionIndex = std::max(0, optionIndex);
 
     if (folderNames.size()) {
-      optionIndex = std::min(4, optionIndex); // total of 5 options 
+      optionIndex = std::min(3, optionIndex); // total of 4 options 
     }
     else {
       optionIndex = 0; // "NEW" option only
@@ -395,13 +395,6 @@ void FolderScene::onUpdate(double elapsed) {
           folderSwitch = true;
 
           break;
-        case 4: // DELETE 
-          DeleteFolder([this]() {
-            promptOptions = false;
-            currFolderIndex = std::max(0, currFolderIndex-1);
-            folderSwitch = true;
-            });
-          break;
         }
       }
       else {
@@ -477,7 +470,6 @@ void FolderScene::onResume() {
     // Save any edits
     collection.SetFolderName(folderNames[currFolderIndex], folder);
     folderSwitch = true;
-    collection.WriteToFile("resources/database/folders.txt");
 }
 
 void FolderScene::onDraw(sf::RenderTexture& surface) {
@@ -572,7 +564,7 @@ void FolderScene::onDraw(sf::RenderTexture& surface) {
 
 
   // swoosh::ease::interpolate((float)frameElapsed * 7.0f, cursor.getPosition().y, 138.0f + ((optionIndex) * 32.0f));
-  auto y = 138.0f + ((optionIndex) * 32.0f); 
+  auto y = 138.0f + ((optionIndex) * 32.0f) + 12.0f; 
   cursor.setPosition(2.0, y);
 
   if (!folder) return;
@@ -639,43 +631,6 @@ void FolderScene::MakeNewFolder() {
   }
 
   folderNames = collection.GetFolderNames();
-}
-
-void FolderScene::DeleteFolder(std::function<void()> onSuccess)
-{
-  if (!folderNames.size()) {
-    Audio().Play(AudioType::CHIP_ERROR);
-    return;
-  }
-
-  auto onYes = [onSuccess, this]() {
-    if (collection.DeleteFolder(folderNames[currFolderIndex])) {
-      onSuccess();
-      folderNames = collection.GetFolderNames();
-
-      if (folderNames.empty()) {
-        folder = nullptr;
-      }
-    }
-
-    textbox.Close();
-    Audio().Play(AudioType::CHIP_DESC_CLOSE);
-  };
-
-  auto onNo = [this]() {
-    textbox.Close();
-    Audio().Play(AudioType::CHIP_DESC_CLOSE);
-  };
-
-  //if (questionInterface) delete questionInterface;
-  questionInterface = new Question("Delete this folder?", onYes, onNo);
-
-  textbox.EnqueMessage(
-    sf::Sprite(*Textures().GetTexture(TextureType::MUG_NAVIGATOR)), 
-    "resources/ui/navigator.animation", 
-    questionInterface);
-
-  textbox.Open();
 }
 
 void FolderScene::RefreshOptions()

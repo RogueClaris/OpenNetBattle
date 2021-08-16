@@ -5,9 +5,10 @@
 #include "../bnCardFolderCollection.h"
 #include "../bnCardLibrary.h"
 #include "../bnPA.h"
+#include "../bnRandomMettaurMob.h"
 
 namespace Overworld {
-  class GameArea final : public Homepage {
+  class GameArea final : public SceneBase {
   private:
     bool scaledmap{ false }, clicked{ false };
     bool infocus{ false };
@@ -25,8 +26,10 @@ namespace Overworld {
     /**
      * @brief Loads the player's library data and loads graphics
      */
-    GameArea(swoosh::ActivityController&, const std::string& mapPath, sf::Vector3f entryPos, const Direction mapDirection, bool isLoad);
+      GameArea(swoosh::ActivityController&, const std::string& mapPath, sf::Vector3f entryPos, const Direction mapDirection, bool isLoad, PlayerSession& sesh);
     ~GameArea();
+
+    PlayerSession& backupSession = PlayerSession{};
 
     void onUpdate(double elapsed);
     void onDraw(sf::RenderTexture& surface);
@@ -38,5 +41,11 @@ namespace Overworld {
     void OnTileCollision();
     void OnInteract(Interaction type);
     void detectConveyor();
+  };
+
+  class LoadScene final {
+  public:
+      LoadScene(swoosh::ActivityController&);
+      ~LoadScene();
   };
 }

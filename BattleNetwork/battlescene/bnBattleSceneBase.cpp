@@ -474,11 +474,6 @@ void BattleSceneBase::onUpdate(double elapsed) {
 
   newMobSize = mob? mob->GetMobCount() : 0;
 
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
-    Quit(QuitMode::white);
-    Audio().StopStream();
-  }
-
   // State update
   if(!current) return;
 
@@ -789,7 +784,7 @@ void BattleSceneBase::Quit(const QuitMode& mode) {
     getController().pop<segue<PixelateBlackWashFade>>();
   }
   else if (mode == QuitMode::game_over) {
-    getController().rewind<segue<BlackWashFade>::to<GameOverScene>>();
+    getController().push<segue<BlackWashFade>::to<GameOverScene>>();
   }
 
   quitting = true;

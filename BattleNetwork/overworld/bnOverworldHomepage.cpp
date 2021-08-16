@@ -46,7 +46,7 @@ Overworld::Homepage::Homepage(swoosh::ActivityController& controller) :
     catch (Poco::IOException&) {}
   }
 
-  LoadMap(FileUtil::Read("resources/ow/maps/homepage.tmx"));
+  LoadMap(FileUtil::Read("resources/ow/maps/Lan's Homepage.tmx"));
 
   auto& map = GetMap();
   sf::Vector3f spawnPos;
@@ -212,13 +212,6 @@ Overworld::Homepage::Homepage(swoosh::ActivityController& controller) :
               menuSystem.SetNextSpeaker(face, "resources/ow/prog/prog_mug.animation");
               menuSystem.EnqueueMessage("CHANGED TO " + response + "!");
               WEBCLIENT.SetKey("homepage_warp:0", response);
-
-              if (WEBCLIENT.IsLoggedIn()) {
-                WEBCLIENT.SaveSession("profile.bin");
-              }
-              else {
-                WEBCLIENT.SaveSession("guest.bin");
-              }
             }
             catch (...) {
               auto& menuSystem = GetMenuSystem();
@@ -293,35 +286,6 @@ void Overworld::Homepage::onUpdate(double elapsed)
     scaledmap = false;
   }
 
-  /*if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && !clicked) {
-    const size_t tilesetCount = map.GetTilesetItemCount();
-    if (tilesetCount > 0) {
-      auto tile = map.GetTileAt(click);
-      tile.solid = false;
-
-      tile.ID = ((++tile.ID) % tilesetCount) + 1ull;
-
-      map.SetTileAt(click, tile);
-
-      clicked = true;
-    }
-  }
-  else if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right) && !clicked) {
-    auto tile = map.GetTileAt(click);
-    tile.solid = true;
-    tile.ID = 0;
-
-    map.SetTileAt(click, tile);
-
-    clicked = true;
-  }
-  else if (clicked
-    && !sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)
-    && !sf::Mouse::isButtonPressed(sf::Mouse::Button::Right))
-  {
-    clicked = false;
-  }*/
-
   // do default logic
   SceneBase::onUpdate(elapsed);
 
@@ -349,8 +313,44 @@ void Overworld::Homepage::onDraw(sf::RenderTexture& surface)
 void Overworld::Homepage::onStart()
 {
   SceneBase::onStart();
-
   Audio().Stream("resources/loops/loop_overworld.ogg", false);
+  auto folders = GetFolderCollection();
+  folders.MakeFolder("LanFldr");
+  CardFolder* LanFoldr;
+  folders.GetFolder("LanFldr", LanFoldr);
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Cannon A"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Cannon A"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Cannon B"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("AirShot *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("AirShot *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Vulcan1 C"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Vulcan1 C"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Vulcan1 C"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Sword L"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Sword A"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("WideSword L"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("WideSword A"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("LongSword L"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("LongSword A"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Zapring *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Zapring *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Zapring *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Minibomb *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Minibomb *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Minibomb *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Recov10 *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Recov10 *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Thunder1 B"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Thunder1 B"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Barrier E"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Barrier E"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("RockCube *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("RockCube *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Atk+10 *"));
+  LanFoldr->AddCard(BuiltInCards::cardList.at("Atk+10 *"));
+  GetPlayerSession().get()->folders = folders;
+  int mHp = GetPlayerSession().get()->maxHealth;
+  GetPlayerSession().get()->health = mHp; //remove this when homepages are something else.
   infocus = true;
 }
 
@@ -402,12 +402,13 @@ void Overworld::Homepage::OnTileCollision()
     );
     auto warpTile = map.GetLayer(0).GetTileObject("Net Warp");
     auto warpMap = warpTile->get().customProperties.GetProperty("destination");
+    Logger::Log(warpMap);
     sf::Vector2f warpBasicXY = { warpTile->get().customProperties.GetPropertyFloat("x"), warpTile->get().customProperties.GetPropertyFloat("y")};
     auto warpBasic = map.TileToWorld(warpBasicXY);
     auto warpPos = sf::Vector3f(warpBasic.x, warpBasic.y, warpTile->get().customProperties.GetPropertyFloat("z"));
     Direction warpDirection = FromString(warpTile->get().customProperties.GetProperty("direction"));
     auto teleportToCyberworld = [=] {
-      getController().push<segue<BlackWashFade>::to<Overworld::GameArea>>(warpMap, warpPos, warpDirection, false);
+        getController().push<segue<BlackWashFade>::to<Overworld::GameArea>>(warpMap, warpPos, warpDirection, false, *GetPlayerSession());
     };
 
     this->TeleportUponReturn(returnPoint);

@@ -9,6 +9,7 @@
 #include "bnCardUsePublisher.h"
 #include "bnSpriteProxyNode.h"
 #include "bnText.h"
+#include "bnResourceHandle.h"
 
 using std::ostringstream;
 using std::vector;
@@ -50,7 +51,7 @@ public:
    * @brief Broadcasts the card at the cursor curr. Increases curr.
    * @return True if there was a card to use
    */
-  void UseNextCard() override;
+  bool UseNextCard() override;
 
   /**
  * @brief Broadcasts the card information to all listeners
@@ -97,4 +98,5 @@ private:
   mutable bool firstFrame{ true }; /*!< If true, this UI graphic is being drawn for the first time*/
   mutable SpriteProxyNode icon;
   mutable SpriteProxyNode frame; /*!< Sprite for the card icon and the black border */
+  TextureResourceManager& TemporaryResourceManager;
 };

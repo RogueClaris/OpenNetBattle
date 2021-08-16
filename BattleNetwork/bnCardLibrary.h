@@ -78,6 +78,32 @@ public:
    * @return integer number of copies or zero if not found
    */
   const int GetCountOf(const Battle::Card& card);
+
+  /**
+  * @brief Returns the card at the specified index.
+  * @return Battle Card object.
+  */
+  Battle::Card CardLibrary::GetCardAt(unsigned int index) {
+      Battle::Card card;
+      if (index < 0 || index > this->GetSize()) {
+          return card;
+      }
+      for (auto i = library.begin(); i != library.end(); i++) {
+          if (std::distance(i, library.end()) == index) {
+              return *i;
+          }
+      }
+      return card;
+  }
+
+
+  std::map<std::string, int> GetPackList() {
+      std::map<std::string, int> cardList;
+      for (auto i = library.begin(); i != library.end(); i++) {
+          cardList[i->GetUUID()] = this->GetCountOf(*i);
+      }
+      return cardList;
+  }
   
   /**
    * @brief Given a name and code, return the card from the database
@@ -86,6 +112,11 @@ public:
    * @return Copy of entry. If no entry was found, a card with error information is returned
    */
   Battle::Card GetCardEntry(const std::string name, const char code);
+
+  /**
+  * @brief Resets the library to a blank slate.
+  */
+  void ResetLibrary();
 
   /**
   * @brief Writes library to disc

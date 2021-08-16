@@ -2,6 +2,8 @@
 #include "../bnMob.h"
 #include "../bnElementalDamage.h"
 #include "../../bnPlayer.h"
+#include "../bnMobRewards.h"
+#include "../bnBuiltInCards.h"
 
 #include "States/bnRewardBattleState.h"
 #include "States/bnTimeFreezeBattleState.h"
@@ -19,7 +21,7 @@ using namespace swoosh;
 MobBattleScene::MobBattleScene(ActivityController& controller, const MobBattleProperties& props, BattleResultsFunc onEnd) :
   props(props), 
   BattleSceneBase(controller, props.base, onEnd) {
-
+  
   Mob* current = props.mobs.at(0);
 
   // Simple error reporting if the scene was not fed any mobs
@@ -30,17 +32,39 @@ MobBattleScene::MobBattleScene(ActivityController& controller, const MobBattlePr
     Logger::Log(std::string("Warning: Current mob was empty when battle started. Mob Type: ") + typeid(current).name());
   }
   else {
-    LoadMob(*props.mobs.front());
+      LoadMob(*props.mobs.front());
+      for (auto i = 0; i < current->GetMobCount(); i++) {
+          auto rewards = MobRewards::LookupReward(current->GetMobAt(i).GetName());
+          if (!rewards.empty()) {
+              for (auto j = 0; j < (int)rewards.size(); j++) {
+                  if (rewards[j][0] == "Card") {
+                      Battle::Card card;
+                      for (auto& [key, value] : BuiltInCards::cardList) {
+                          if (value.GetUUID() == rewards[j][1]) {
+                              int rank = std::stoi(rewards[j][2]);
+                              current->RegisterRankedReward(rank, value);
+                          }
+                      }
+                  }
+                  else if (rewards[j][0] == "Money") {
+                      int amount = std::stoi(rewards[j][1]);
+                      int rank = std::stoi(rewards[j][2]);
+                      auto card = Battle::Card();
+                      BattleItem rewardMoney = BattleItem(card, amount);
+                      current->RegisterRankedReward(rank, rewardMoney);
+                  }
+              }
+          }
+      }
   }
 
   GetCardSelectWidget().SetSpeaker(props.mug, props.anim);
   GetEmotionWindow().SetTexture(props.emotion);
-
   // If playing co-op, add more players to track here
   players = { &props.base.player };
-
+  
   // ptr to player, form select index (-1 none), if should transform
-  trackedForms = { 
+  trackedForms = {
     std::make_shared<TrackedFormData>(&props.base.player, -1, false)
   }; 
 

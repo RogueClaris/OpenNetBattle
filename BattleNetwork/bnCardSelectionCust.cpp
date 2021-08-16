@@ -5,6 +5,7 @@
 #include "bnInputManager.h"
 #include "bnWebClientMananger.h"
 #include "bnCardLibrary.h"
+#include "bnCardFolder.h"
 
 #define WILDCARD '*'
 
@@ -404,13 +405,11 @@ bool CardSelectionCust::CursorCancel() {
     // Unqueue all cards buckets
     if (newSelectCount > 0) {
         newSelectQueue[--newSelectCount]->state = Bucket::state::staged;
-        return true;
     }
     else if (newSelectCount < 0) {
         newSelectCount = 0;
-        return true;
     }
-    if (newSelectCount == 0) {
+    else{
         newHand = false;
         if (lockedInFormIndex != GetSelectedFormIndex()) {
             currentFormItem.setTexture(*previousFormItem.getTexture());
@@ -712,7 +711,24 @@ void CardSelectionCust::draw(sf::RenderTarget& target, sf::RenderStates states) 
         }
 
         icon.setPosition(offset + 2.f * (9.0f + ((i % 5) * 16.0f)), 2.f * (105.f + (row * 24.0f)));
-        icon.setTexture(Textures().LoadTextureFromFile("resources/cardicons/" + queue[i].data->GetShortName()+".png"));
+        if (queue[i].data->IsTaggedAs("Program Advance")) {
+            icon.setTexture(Textures().LoadTextureFromFile("resources/cardicons/Program Advance.png"));
+        }
+        else if (queue[i].data->IsTaggedAs("Navi")) {
+            if (queue[i].data->IsTaggedAs("DS Chip")) {
+                icon.setTexture(Textures().LoadTextureFromFile("resources/cardicons/NaviSummonDS.png"));
+            }
+            else if (queue[i].data->IsTaggedAs("SP Chip")) {
+                icon.setTexture(Textures().LoadTextureFromFile("resources/cardicons/NaviSummonSP.png"));
+            }
+            else{
+                icon.setTexture(Textures().LoadTextureFromFile("resources/cardicons/NaviSummon.png"));
+            }
+        }
+        else {
+            icon.setTexture(Textures().LoadTextureFromFile("resources/cardicons/" + queue[i].data->GetShortName() + ".png"));
+        }
+        
         icon.SetShader(nullptr);
 
         if (queue[i].state == Bucket::state::voided) {

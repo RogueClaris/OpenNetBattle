@@ -45,7 +45,7 @@ void Question::ExecuteSelection() {
   }
 
   canceled = false; // reset
-  isQuestionReady = false; // reset 
+  isQuestionReady = false; // reset
 }
 
 void Question::OnUpdate(double elapsed) {

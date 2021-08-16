@@ -8,215 +8,176 @@
 
 Overworld::TeleportController::TeleportController()
 {
-  beam = std::make_shared<WorldSprite>();
-  beam->setTexture(Textures().LoadTextureFromFile("resources/ow/teleport.png"));
-  beamAnim = Animation("resources/ow/teleport.animation");
-  beamAnim.SetAnimation("teleport_in");
-  beamAnim.SetFrame(0, beam->getSprite());
+    beam = std::make_shared<WorldSprite>();
+    beam->setTexture(Textures().LoadTextureFromFile("resources/ow/teleport.png"));
+    beamAnim = Animation("resources/ow/teleport.animation");
+    beamAnim.SetAnimation("teleport_in");
+    beamAnim.SetFrame(0, beam->getSprite());
 }
 
 Overworld::TeleportController::Command& Overworld::TeleportController::TeleportOut(std::shared_ptr<Actor> actor)
 {
-  this->actor = actor;
+    this->actor = actor;
 
-  if (!teleportedOut) {
-    actor->Hide();
+    if (!teleportedOut) {
+        actor->Hide();
 
-    auto onStart = [=] {
-      if (!mute) {
-        Audio().Play(AudioType::AREA_GRAB);
-      }
-    };
+        auto onStart = [=] {
+            if (!mute) {
+                Audio().Play(AudioType::AREA_GRAB);
+            }
+        };
 
-    auto onFinish = [=] {
-      this->animComplete = true;
-    };
+        auto onFinish = [=] {
+            this->animComplete = true;
+        };
 
-    animComplete = false;
-    beamAnim << "TELEPORT_OUT" << Animator::On(1, onStart) << onFinish;
-    beamAnim.Refresh(beam->getSprite());
-    beam->Set3DPosition(actor->Get3DPosition());
+        animComplete = false;
+        beamAnim << "TELEPORT_OUT" << Animator::On(1, onStart) << onFinish;
+        beamAnim.Refresh(beam->getSprite());
+        beam->Set3DPosition(actor->Get3DPosition());
 
-    teleportedOut = true;
-  }
+        teleportedOut = true;
+    }
 
-  sequence.push(Command{ Command::state::teleport_out });
-  return sequence.back();
+    sequence.push(Command{ Command::state::teleport_out });
+    return sequence.back();
 }
 
 Overworld::TeleportController::Command& Overworld::TeleportController::TeleportIn(std::shared_ptr<Actor> actor, const sf::Vector3f& start, Direction dir, bool doSpin)
 {
-  teleportedOut = false;
+    teleportedOut = false;
 
-  auto onStart = [=] {
-    if (!mute) {
-      Audio().Play(AudioType::AREA_GRAB);
-    }
-  };
+    auto onStart = [=] {
+        if (!mute) {
+            Audio().Play(AudioType::AREA_GRAB);
+        }
+    };
 
-  auto onEnter = [=] {
-    this->actor->Reveal();
-    this->actor->SetShader(Shaders().GetShader(ShaderType::ADDITIVE));
-    this->actor->setColor(sf::Color::Cyan);
-    this->spin = doSpin;
-    this->entered = true;
-    this->spinProgress = 0;
-  };
+    auto onEnter = [=] {
+        this->actor->Reveal();
+        this->actor->SetShader(Shaders().GetShader(ShaderType::ADDITIVE));
+        this->actor->setColor(sf::Color::Cyan);
+        this->spin = doSpin;
+        this->entered = true;
+        this->spinProgress = 0;
+    };
 
-  auto onFinish = [=] {
+    auto onFinish = [=] {
+        this->animComplete = true;
+        this->actor->RevokeShader();
+        this->actor->setColor(sf::Color::White);
+    };
+
+    this->walkFrames = frames(50);
+    this->startDir = dir;
+    this->actor = actor;
+    this->animComplete = this->walkoutComplete = this->spin = false;
+    this->beamAnim << "TELEPORT_IN" << Animator::On(2, onStart) << Animator::On(5, onEnter) << onFinish;
+
+    this->beamAnim.Refresh(this->beam->getSprite());
+    actor->Hide();
+    actor->Set3DPosition(start);
+    this->beam->Set3DPosition(start);
+
+    this->sequence.push(Command{ Command::state::teleport_in, actor->GetWalkSpeed() });
+    return this->sequence.back();
+}
+
+Overworld::TeleportController::Command& Overworld::TeleportController::Appear(std::shared_ptr<Actor> actor, const sf::Vector3f& start, Direction dir)
+{
+
+    this->walkFrames = frames(0);
+    this->startDir = dir;
+    this->actor = actor;
     this->animComplete = true;
-    this->actor->RevokeShader();
-    this->actor->setColor(sf::Color::White);
-  };
-
-  this->walkFrames = frames(50);
-  this->startDir = dir;
-  this->actor = actor;
-  this->animComplete = this->walkoutComplete = this->spin = false;
-  this->beamAnim << "TELEPORT_IN" << Animator::On(2, onStart) << Animator::On(5, onEnter) << onFinish;
-
-  this->beamAnim.Refresh(this->beam->getSprite());
-  actor->Hide();
-  actor->Set3DPosition(start);
-  this->beam->Set3DPosition(start);
-
-  this->sequence.push(Command{ Command::state::teleport_in, actor->GetWalkSpeed() });
-  return this->sequence.back();
-}
-
-Overworld::TeleportController::Command& Overworld::TeleportController::WalkIn(Direction dir) {
-    auto onEnter = [=] {
-        this->animComplete = true;
-    };
-
-    auto onFinish = [=] {
-        this->animComplete = true;
-    };
-    this->walkFrames = frames(50);
-    this->startDir = dir;
-    this->sequence.push(Command{ Command::state::walk_in, actor->GetWalkSpeed() });
+    this->actor->Set3DPosition(start);
+    this->sequence.push(Command{ Command::state::appear, actor->GetWalkSpeed() });
     return this->sequence.back();
-}
 
-Overworld::TeleportController::Command& Overworld::TeleportController::WalkAway(Direction dir, sf::Vector3f exitPos) {
-    auto onEnter = [=] {
-        this->animComplete = true;
-    };
-
-    auto onFinish = [=] {
-        this->animComplete = true;
-    };
-
-    this->walkFrames = frames(50);
-    this->startDir = dir;
-    this->exitPos = exitPos;
-    this->sequence.push(Command{ Command::state::walk_out, actor->GetWalkSpeed() });
-    return this->sequence.back();
 }
 
 void Overworld::TeleportController::Update(double elapsed)
 {
-  if (sequence.empty()) return;
+    if (sequence.empty()) return;
 
-  this->beamAnim.Update(static_cast<float>(elapsed), beam->getSprite());
-  this->beam->SetLayer(this->actor->GetLayer());
-  auto& next = sequence.front();
-  if (next.state == Command::state::teleport_in) {
-    if (animComplete) {
-      if (walkFrames > frames(0) && this->startDir != Direction::none) {
-        // walk out for 50 frames
-        actor->Walk(this->startDir, true);
-        actor->SetWalkSpeed(40); // overwrite
-        walkFrames -= from_seconds(elapsed);
-      }
-      else {
-        this->walkoutComplete = true;
-        actor->SetWalkSpeed(next.originalWalkSpeed);
-        next.onFinish();
-        sequence.pop();
-      }
-    }
-    else if (next.state == Command::state::walk_in) {
-        if (walkFrames > frames(0) && this->startDir != Direction::none) {
-            // walk out for 50 frames
-            actor->Walk(this->startDir, true);
-            actor->SetWalkSpeed(20); // overwrite
-            walkFrames -= from_seconds(elapsed);
+    this->beamAnim.Update(static_cast<float>(elapsed), beam->getSprite());
+    this->beam->SetLayer(this->actor->GetLayer());
+
+    auto& next = sequence.front();
+    if (next.state == Command::state::teleport_in) {
+        if (animComplete) {
+            if (walkFrames > frames(0) && this->startDir != Direction::none) {
+                // walk out for 50 frames
+                actor->Walk(this->startDir, true);
+                actor->SetWalkSpeed(40); // overwrite
+                walkFrames -= from_seconds(elapsed);
+            }
+            else {
+                this->walkoutComplete = true;
+                actor->SetWalkSpeed(next.originalWalkSpeed);
+                actor->Face(this->startDir);
+                next.onFinish();
+                sequence.pop();
+            }
         }
-        else {
+        else if (entered) {
+            constexpr float _2pi = static_cast<float>(2.0f * M_PI);
+            constexpr float spin_frames = _2pi / 0.25f;
+            float progress = spin_frames * static_cast<float>(elapsed);
+            spinProgress += progress;
+
+            auto cyan = sf::Color::Cyan;
+            sf::Uint8 alpha = static_cast<sf::Uint8>(255 * (1.0f - (spinProgress / spin_frames)));
+            this->actor->setColor({ cyan.r, cyan.g, cyan.b, alpha });
+
+            if (spin) {
+                actor->Face(Actor::MakeDirectionFromVector({ std::cos(spinProgress), std::sin(spinProgress) }));
+            }
+            else {
+                actor->Face(this->startDir);
+            }
+        }
+    }
+    else if (next.state == Command::state::appear) {
+        if (animComplete) {
             this->walkoutComplete = true;
+            this->actor->Reveal();
             actor->SetWalkSpeed(next.originalWalkSpeed);
             next.onFinish();
             sequence.pop();
         }
     }
-    else if (next.state == Command::state::walk_out) {
-        if (walkFrames >= frames(50)) {
-            actor.get()->Set3DPosition(this->exitPos);
-            actor->Walk(this->startDir, true);
-            actor->SetWalkSpeed(20); // overwrite
-            walkFrames -= from_seconds(elapsed);
-        }
-        else if (walkFrames > frames(0)) {
-            actor->Walk(this->startDir, true);
-            actor->SetWalkSpeed(20); // overwrite
-            walkFrames -= from_seconds(elapsed);
-        }
-        else {
-            this->walkoutComplete = true;
-            actor->SetWalkSpeed(next.originalWalkSpeed);
-            next.onFinish;
+    else {
+        // Command::state::teleport_out
+        if (animComplete) {
+            next.onFinish();
             sequence.pop();
         }
     }
-    else if (entered) {
-      constexpr float _2pi = static_cast<float>(2.0f * M_PI);
-      constexpr float spin_frames = _2pi / 0.25f;
-      float progress = spin_frames * static_cast<float>(elapsed);
-      spinProgress += progress;
-
-      auto cyan = sf::Color::Cyan;
-      sf::Uint8 alpha = static_cast<sf::Uint8>(255 * (1.0f - (spinProgress / spin_frames)));
-      this->actor->setColor({ cyan.r, cyan.g, cyan.b, alpha });
-
-      if (spin) {
-        actor->Face(Actor::MakeDirectionFromVector({ std::cos(spinProgress), std::sin(spinProgress) }));
-      }
-      else {
-        actor->Face(this->startDir);
-      }
-    }
-  }
-  else {
-    // Command::state::teleport_out
-    if (animComplete) {
-      next.onFinish();
-      sequence.pop();
-    }
-  }
 }
 
 bool Overworld::TeleportController::TeleportedOut() const {
-  return teleportedOut;
+    return teleportedOut;
 }
 
 const bool Overworld::TeleportController::IsComplete() const
 {
-  if (sequence.empty()) return true;
+    if (sequence.empty()) return true;
 
-  if (sequence.front().state == Command::state::teleport_in) {
-    return walkoutComplete;
-  }
+    if (sequence.front().state == Command::state::teleport_in) {
+        return walkoutComplete;
+    }
 
-  return animComplete;
+    return animComplete;
 }
 
 std::shared_ptr<Overworld::WorldSprite> Overworld::TeleportController::GetBeam()
 {
-  return beam;
+    return beam;
 }
 
 void Overworld::TeleportController::EnableSound(bool enable)
 {
-  mute = !enable;
+    mute = !enable;
 }

@@ -1,3 +1,5 @@
+#pragma once
+#include <Segues/DiamondTileCircle.h>
 #include <Segues/BlackWashFade.h>
 #include <Segues/WhiteWashFade.h>
 #include "bnOverworldGameArea.h"
@@ -11,6 +13,7 @@
 #include "../bnGameOverScene.h"
 #include "../bnCardFolderCollection.h"
 #include "../bnBuiltInProgramAdvances.h"
+#include "../bnField.h"
 
 using namespace swoosh::types;
 
@@ -21,15 +24,17 @@ Overworld::GameArea::GameArea(
     const std::string& mapPath,
     sf::Vector3f entryPos,
     Direction mapDirection,
-    bool isLoad)
+    bool isLoad,
+    PlayerSession& session)
     :
-    Homepage(controller)
+    SceneBase(controller)
 {
-    if (!isLoad) {
-        LoadMap(FileUtil::Read(mapPath));
-
-        auto& map = GetMap();
-
+    if (isLoad == false) {
+        LoadMap(FileUtil::Read("resources/ow/maps/" + mapPath + ".tmx"));
+        GetPlayerSession().get()->folders = session.folders;
+        GetPlayerSession().get()->pack = session.pack;
+        GetPlayerSession().get()->health = session.health;
+        GetPlayerSession().get()->maxHealth = session.maxHealth;
         // spawn in the player
         auto player = GetPlayer();
         auto& command = GetTeleportController().TeleportIn(player, entryPos, mapDirection, true);
@@ -38,7 +43,20 @@ Overworld::GameArea::GameArea(
             });
     }
     else {
-        auto sesh = GetPlayerSession();
+        this->isLoad = true;
+        auto saver = new Overworld::SessionSaver();
+        auto sesh = saver->LoadGameSession("");
+        LoadMap(FileUtil::Read("resources/ow/maps/" + sesh.mapName + ".tmx"));
+        auto player = GetPlayer();
+        GetPlayerSession().get()->money = sesh.money;
+        GetPlayerSession().get()->maxHealth = sesh.maxHealth;
+        GetPlayerSession().get()->health = sesh.health;
+        GetPlayerSession().get()->folders = sesh.folders;
+        GetPlayerSession().get()->pack = sesh.pack;
+        auto& command = GetTeleportController().Appear(player, sesh.playerPos, Direction::none);
+        command.onFinish.Slot([=] {
+            GetPlayerController().ControlActor(player);
+            });
     }
     
 }
@@ -76,16 +94,14 @@ void Overworld::GameArea::onUpdate(double elapsed)
           });
   }
   else {
-      if (GetTeleportController().IsComplete() && !map.isEncounter) {
-          Logger::Log("hello 1");
+      if (GetTeleportController().IsComplete() && !map.isEncounter == true) {
           if (player->getDistance(player->lastPos, player->getPosition()) > 0) {
-              Logger::Log("hello 2");
               map.updateBattleSteps();
-              if (map.CurrentBattleSteps >= map.BattleSteps) {
-                  Logger::Log("hello 3");
-                  map.nextBattleIndex = std::floor(rand() % map.nextBattleList.size());
-                  std::string checkMob = map.nextBattleList.at(map.nextBattleIndex);
-                  Mob* mob = MobRegistration::GetInstance().Find(checkMob).GetMob();
+              if (map.CurrentBattleSteps > map.BattleSteps && map.nextBattleList.size()) {
+                  std::vector<std::string> checkMob = map.nextBattleList;
+                  Field* field = new Field(6, 3);
+                  RandomMettaurMob* starter = &RandomMettaurMob(field);
+                  auto* mob = starter->Build(checkMob);
                   Audio().Play(AudioType::PRE_BATTLE, AudioPriority::high);
                   Audio().StopStream();
                   auto& meta = NAVIS.At(GetCurrentNavi());
@@ -98,7 +114,11 @@ void Overworld::GameArea::onUpdate(double elapsed)
                   if (!mob->GetBackground()) {
                       mob->SetBackground(GetBackground());
                   }
+                  player->SetHealth(GetPlayerSession()->health);
                   PA& PhotonArt = GetProgramAdvance();
+                  for (auto& [key, value] : BuiltInProgramAdvances::advanceList) {
+                      PhotonArt.RegisterPA(value);
+                  }
                   auto folder = *GetSelectedFolder();
                   if (folder) {
                       folder = folder->Clone();
@@ -115,6 +135,8 @@ void Overworld::GameArea::onUpdate(double elapsed)
                   using effect = segue<WhiteWashFade>;
                   auto handleBattleResult = [this](const BattleResults& results) {
                       GetPlayerSession()->health = results.playerHealth; //BN2+ HP retention; remove for BN1 HP restoration.
+                      GetPlayerSession()->money += results.moniesToGet;
+                      GetPlayerSession()->emotion = results.finalEmotion;
                   };
                   getController().push<effect::to<MobBattleScene>>(props, handleBattleResult);
                   GetPlayerController().ListenToInputEvents(false);
@@ -135,7 +157,6 @@ void Overworld::GameArea::onDraw(sf::RenderTexture& surface)
 void Overworld::GameArea::onStart()
 {
   SceneBase::onStart();
-
   Audio().Stream("resources/loops/loop_overworld.ogg", false);
   infocus = true;
 }
@@ -423,7 +444,6 @@ Overworld::TeleportController::Command& Overworld::GameArea::teleportIn(sf::Vect
 
     if (!positionIsInWarp(position)) {
         actor->Face(direction);
-        direction = Direction::none;
     }
 
     return GetTeleportController().TeleportIn(actor, position, direction);
@@ -453,3 +473,14 @@ void Overworld::GameArea::OnInteract(Interaction type) {
     }
   }
 }
+
+Overworld::LoadScene::~LoadScene()
+{
+}
+
+Overworld::LoadScene::LoadScene(swoosh::ActivityController& controller) {
+    auto saver = new Overworld::SessionSaver();
+    auto sesh = saver->LoadGameSession("");
+    using tx = segue<DiamondTileCircle>::to<Overworld::GameArea>;
+    controller.push<tx>("resources/ow/maps/"+sesh.mapName + ".tmx", sesh.playerPos, Direction::none, true, sesh);
+};

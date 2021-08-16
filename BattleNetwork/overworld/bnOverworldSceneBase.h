@@ -20,6 +20,8 @@
 #include "../bnCardFolderCollection.h"
 #include "../bnKeyItemScene.h"
 #include "../bnInbox.h"
+#include "../bnAnimatedTextBox.h"
+#include "../bnMessageQuestion.h"
 
 // overworld
 #include "bnOverworldPlayerSession.h"
@@ -73,6 +75,8 @@ namespace Overworld {
         std::vector<std::shared_ptr<WorldSprite>> sprites;
         std::vector<std::vector<std::shared_ptr<WorldSprite>>> spriteLayers;
         Overworld::MenuSystem menuSystem;
+        Question* questionInterface{ nullptr };
+        AnimatedTextBox textbox;
 
         /*!< Current navi selection index */
         SelectedNavi currentNavi{},
@@ -234,8 +238,11 @@ namespace Overworld {
         void GotoChipFolder();
         void GotoNaviSelect();
         void GotoConfig();
+        void GotoLibrary();
+        void GotoSubchip();
         void GotoMobSelect();
         void GotoPVP();
+        void GotoSave();
         void GotoMail();
         void GotoKeyItems();
 
@@ -250,6 +257,7 @@ namespace Overworld {
         Map& GetMap();
         std::shared_ptr<PlayerSession>& GetPlayerSession();
         std::shared_ptr<Actor> GetPlayer();
+        CardFolderCollection GetFolderCollection();
         PlayerController& GetPlayerController();
         TeleportController& GetTeleportController();
         SelectedNavi& GetCurrentNavi();

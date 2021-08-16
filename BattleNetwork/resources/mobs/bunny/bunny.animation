@@ -1,0 +1,21 @@
+imagePath="C:/Users/Owner/Desktop/ONB Dev/OpenNetBattle-Singleplayer/BattleNetwork/resources/mobs/bunny/bunny.png"
+
+animation state="IDLE_1"
+frame duration="0.05" x="30" y="13" w="26" h="45" originx="13" originy="44"
+
+animation state="MOVE_UP_1"
+frame duration="0.05" x="30" y="13" w="26" h="45" originx="13" originy="44"
+frame duration="0.075" x="63" y="6" w="26" h="51" originx="13" originy="50"
+frame duration="0.1" x="98" y="0" w="26" h="57" originx="13" originy="56"
+
+animation state="ATTACK_1"
+frame duration="0.05" x="5" y="68" w="39" h="42" originx="13" originy="41"
+frame duration="0.075" x="50" y="68" w="40" h="42" originx="13" originy="41"
+frame duration="0.09" x="100" y="66" w="36" h="44" originx="23" originy="43"
+frame duration="0.05" x="147" y="68" w="39" h="42" originx="26" originy="41"
+frame duration="0.05" x="193" y="67" w="39" h="43" originx="25" originy="42"
+
+animation state="MOVE_DOWN_1"
+frame duration="0.1" x="98" y="0" w="26" h="57" originx="13" originy="56"
+frame duration="0.075" x="134" y="6" w="29" h="51" originx="16" originy="50"
+frame duration="0.05" x="175" y="15" w="26" h="42" originx="13" originy="41"

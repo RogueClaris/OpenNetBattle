@@ -31,6 +31,7 @@ public:
    */
   BattleItem(const Battle::Card& card) : card(card), name(card.GetShortName()), cardUUID(card.GetUUID()) { isCard = true; isZenny = isHP = false; }
   BattleItem(const BattleItem& rhs) : card(rhs.card) { isCard = rhs.isCard; isZenny = rhs.isZenny; isHP = rhs.isHP; cardUUID = rhs.cardUUID; name = rhs.name; }
+  BattleItem(const Battle::Card& card, int cash) : card(card), name("Monies"), cardUUID(to_string(cash)) { isCard = false; isZenny = true; isHP = false; }
   
   /**
    * @brief Get card UUID
@@ -49,7 +50,13 @@ public:
    * @return true if battle item is a card and contains card data
    */
   bool IsCard() { return isCard; }
-  
+
+  /**
+     * @brief Query if cash
+     * @return true if battle item is money.
+     */
+  bool IsCash() { return isZenny; }
+
   /**
    * @brief Get card data
    * @return Battle::Card

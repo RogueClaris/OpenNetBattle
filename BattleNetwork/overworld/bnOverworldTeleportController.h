@@ -19,7 +19,8 @@ namespace Overworld {
         teleport_in = 0,
         teleport_out,
         walk_in,
-        walk_out
+        walk_out,
+        appear
       } const state{};
       const float originalWalkSpeed{};
       Callback<void()> onFinish;
@@ -30,6 +31,7 @@ namespace Overworld {
 
     Command& TeleportOut(std::shared_ptr<Actor> actor);
     Command& TeleportIn(std::shared_ptr<Actor> actor, const sf::Vector3f& start, Direction dir, bool doSpin = false);
+    Command& Appear(std::shared_ptr<Actor> actor, const sf::Vector3f& start, Direction dir);
     Command& WalkIn(Direction dir);
     Command& WalkAway(Direction dir, sf::Vector3f exitPos);
     void Update(double elapsed);

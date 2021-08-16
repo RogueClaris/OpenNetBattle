@@ -36,7 +36,9 @@ public:
   * @return true if success, false otherwise
   */
   const bool SelectYes();
+  
 
+  bool isFinished = false;
   /**
  * @brief Selects no if applicable
  * @return true if success, false otherwise

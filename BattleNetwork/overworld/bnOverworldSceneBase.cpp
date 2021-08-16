@@ -50,13 +50,14 @@ using namespace swoosh::types;
 namespace {
     auto MakeOptions = [](Overworld::SceneBase* scene) -> Overworld::PersonalMenu::OptionsList {
         return {
-          { "chip_folder", std::bind(&Overworld::SceneBase::GotoChipFolder, scene) },
-          //{ "navi",        std::bind(&Overworld::SceneBase::GotoNaviSelect, scene) },
-          { "mail",        std::bind(&Overworld::SceneBase::GotoMail, scene) },
-          { "key_items",   std::bind(&Overworld::SceneBase::GotoKeyItems, scene) },
-          //{ "mob_select",  std::bind(&Overworld::SceneBase::GotoMobSelect, scene) },
-          { "config",      std::bind(&Overworld::SceneBase::GotoConfig, scene) }
-          //{ "sync",        std::bind(&Overworld::SceneBase::GotoPVP, scene) }
+          { "chip_folder",   std::bind(&Overworld::SceneBase::GotoChipFolder, scene) },
+          { "subchip",       std::bind(&Overworld::SceneBase::GotoSubchip, scene) },
+          { "library",       std::bind(&Overworld::SceneBase::GotoLibrary, scene) },
+          //{ "navi",          std::bind(&Overworld::SceneBase::GotoNaviSelect, scene) },
+          { "mail",          std::bind(&Overworld::SceneBase::GotoMail, scene) },
+          { "key_items",     std::bind(&Overworld::SceneBase::GotoKeyItems, scene) },
+          { "config",        std::bind(&Overworld::SceneBase::GotoConfig, scene) },
+          { "save",          std::bind(&Overworld::SceneBase::GotoSave, scene) }
         };
     };
 }
@@ -69,9 +70,9 @@ Overworld::SceneBase::SceneBase(swoosh::ActivityController& controller) :
     camera(controller.getWindow().getView()),
     Scene(controller),
     map(0, 0, 0, 0),
-    playerActor(std::make_shared<Overworld::Actor>("You"))
+    playerActor(std::make_shared<Overworld::Actor>("You")),
+    textbox(AnimatedTextBox(sf::Vector2f{4, 255}))
 {
-
     // Draws the scrolling background
     SetBackground(std::make_shared<LanBackground>());
 
@@ -107,19 +108,48 @@ void Overworld::SceneBase::onStart() {
 
     // TODO: Take out after endpoints are added to server @Konst
     Inbox& inbox = playerSession->inbox;
-
-    sf::Texture mugshot = *Textures().LoadTextureFromFile("resources/ow/prog/prog_mug.png");
-    inbox.AddMail(Inbox::Mail{ Inbox::Icons::announcement, "Welcome", "NO-TITLE", "This is your first email!", mugshot });
-    inbox.AddMail(Inbox::Mail{ Inbox::Icons::dm, "HELLO", "KERISTERO", "try gravy" });
-    inbox.AddMail(Inbox::Mail{ Inbox::Icons::dm_w_attachment, "ELLO", "DESTROYED", "ello govna" });
-    inbox.AddMail(Inbox::Mail{ Inbox::Icons::important, "FIRE", "NO-TITLE", "There's a fire in the undernet!", mugshot });
-    inbox.AddMail(Inbox::Mail{ Inbox::Icons::mission, "MISSING", "ANON", "Can you find my missing data? It would really help me out right now... Or don't if it's too hard, I understand..." });
-    inbox.AddMail(Inbox::Mail{ Inbox::Icons::dm, "Test", "NO-TITLE", "Just another test.", mugshot });
 }
 
 void Overworld::SceneBase::onUpdate(double elapsed) {
     playerController.ListenToInputEvents(!IsInputLocked());
-
+    if (textbox.IsOpen()) {
+        if (!questionInterface->isFinished) {
+            if (textbox.IsEndOfBlock()) {
+                if (Input().Has(InputEvents::pressed_ui_left)) {
+                    questionInterface->SelectYes();
+                }
+                else if (Input().Has(InputEvents::pressed_ui_right)) {
+                    questionInterface->SelectNo();
+                }
+                else if (Input().Has(InputEvents::pressed_confirm)) {
+                    if (!textbox.IsEndOfMessage()) {
+                        questionInterface->Continue();
+                    }
+                    else {
+                        questionInterface->ConfirmSelection();
+                        questionInterface->isFinished = true;
+                    }
+                }
+                else if (Input().Has(InputEvents::pressed_cancel)) {
+                    questionInterface->SelectNo();
+                    questionInterface->ConfirmSelection();
+                    questionInterface->isFinished = true;
+                }
+            }
+        }
+        else {
+            if (Input().Has(InputEvents::pressed_confirm)) {
+                if (textbox.IsEndOfMessage()){
+                    textbox.DequeMessage();
+                    questionInterface->isFinished = false;
+                    textbox.Close();
+                }
+            }
+        }
+        //update the box if we're in this loop.
+        textbox.Update(elapsed);
+        return;
+    }
     if (!gotoNextScene) {
         HandleInput();
     }
@@ -167,37 +197,6 @@ void Overworld::SceneBase::onUpdate(double elapsed) {
         return; // keep the screen looking the same when we come back
 #endif
 
-    if (WEBCLIENT.IsLoggedIn() && accountCommandResponse.valid() && is_ready(accountCommandResponse)) {
-        try {
-            webAccount = accountCommandResponse.get();
-            Logger::Logf("You have %i folders on your account", webAccount.folders.size());
-            WEBCLIENT.CacheTextureData(webAccount);
-            folders = CardFolderCollection::ReadFromWebAccount(webAccount);
-            programAdvance = PA::ReadFromWebAccount(webAccount);
-
-            NaviEquipSelectedFolder();
-
-            // Replace
-            WEBCLIENT.SaveSession("profile.bin");
-        }
-        catch (const std::runtime_error& e) {
-            Logger::Logf("Could not fetch account.\nError: %s", e.what());
-        }
-    }
-
-    // update the web connectivity icon
-    bool currentConnectivity = WEBCLIENT.IsConnectedToWebServer();
-    if (currentConnectivity != lastIsConnectedState) {
-        if (WEBCLIENT.IsConnectedToWebServer()) {
-            webAccountAnimator.SetAnimation("OK_CONNECTION");
-        }
-        else {
-            webAccountAnimator.SetAnimation("NO_CONNECTION");
-        }
-
-        lastIsConnectedState = currentConnectivity;
-    }
-
     auto layerCount = map.GetLayerCount() + 1;
 
     if (spriteLayers.size() != layerCount) {
@@ -241,12 +240,8 @@ void Overworld::SceneBase::onUpdate(double elapsed) {
 
     HandleCamera((float)elapsed);
 
-    // Allow player to resync with remote account by pressing the pause action
-    /*if (Input().Has(InputEvents::pressed_option)) {
-        accountCommandResponse = WEBCLIENT.SendFetchAccountCommand();
-    }*/
-
-    webAccountAnimator.Update((float)elapsed, webAccountIcon.getSprite());
+    //update the save textbox
+    textbox.Update(elapsed);
 }
 
 void Overworld::SceneBase::HandleCamera(float elapsed) {
@@ -311,20 +306,6 @@ void Overworld::SceneBase::onEnter()
 
 void Overworld::SceneBase::onResume() {
 
-    auto guestAccount = !WEBCLIENT.IsLoggedIn();
-
-    if (!guestAccount) {
-        accountCommandResponse = WEBCLIENT.SendFetchAccountCommand();
-    }
-    else {
-        try {
-            WEBCLIENT.SaveSession("guest.bin");
-        }
-        catch (const std::runtime_error& e) {
-            Logger::Logf("Could not fetch account.\nError: %s", e.what());
-        }
-    }
-
     gotoNextScene = false;
 
     // if we left this scene for a new OW scene... return to our warp area
@@ -342,7 +323,6 @@ void Overworld::SceneBase::onResume() {
             playerController.ControlActor(playerActor);
             });
     }
-
     Audio().Stream(GetPath(map.GetSongPath()), true);
 
 #ifdef __ANDROID__
@@ -368,14 +348,15 @@ void Overworld::SceneBase::onDraw(sf::RenderTexture& surface) {
         personalMenu->draw(surface, sf::RenderStates::Default);
     }
 
-    // Add the web account connection symbol
-    surface.draw(webAccountIcon);
-
     // This will mask everything before this line with camera fx
     surface.draw(camera.GetLens());
 
     // always see menus
     surface.draw(menuSystem);
+
+    if (textbox.IsOpen()) {
+        surface.draw(textbox);
+    }
 }
 
 void Overworld::SceneBase::DrawWorld(sf::RenderTarget& target, sf::RenderStates states) {
@@ -554,7 +535,6 @@ void Overworld::SceneBase::RefreshNaviSprite()
     auto& meta = NAVIS.At(currentNavi);
 
     // refresh menu widget too
-    playerSession->health = meta.GetHP();
     playerSession->maxHealth = meta.GetHP();
 
     // If coming back from navi select, the navi has changed, update it
@@ -780,7 +760,15 @@ void Overworld::SceneBase::GotoChipFolder()
     Audio().Play(AudioType::CHIP_DESC);
 
     using effect = segue<PushIn<direction::left>, milliseconds<500>>;
-    getController().push<effect::to<FolderScene>>(folders);
+    getController().push<effect::to<FolderScene>>(GetPlayerSession().get()->folders);
+}
+
+void Overworld::SceneBase::GotoLibrary()
+{
+}
+
+void Overworld::SceneBase::GotoSubchip()
+{
 }
 
 void Overworld::SceneBase::GotoNaviSelect()
@@ -831,6 +819,39 @@ void Overworld::SceneBase::GotoPVP()
     Audio().Play(AudioType::CHIP_DESC);
     using effect = segue<PushIn<direction::down>, milliseconds<500>>;
     getController().push<effect::to<MatchMakingScene>>(static_cast<int>(currentNavi), *folder, programAdvance);
+}
+
+void Overworld::SceneBase::GotoSave() {
+    auto onYes = [this]() {
+        auto saver = new SessionSaver();
+        auto library = CardLibrary::GetInstance();
+        GetPlayerSession()->pack = library;
+        GetPlayerSession()->folders = GetFolderCollection();
+        GetPlayerSession()->mapName = GetMap().GetName();
+        GetPlayerSession()->playerPos = GetPlayer()->Get3DPosition();
+        bool didSave = saver->SaveGameSession("", *GetPlayerSession());
+        if (didSave) {
+            Audio().Play(AudioType::ITEM_GET);
+            textbox.EnqueMessage(sf::Sprite(*Textures().GetTexture(TextureType::MUG_NAVIGATOR)), "resources/ui/navigator.animation", new Message("Success! Your game was saved."));
+        }
+        else {
+            Audio().Play(AudioType::CHIP_ERROR);
+            textbox.EnqueMessage(sf::Sprite(*Textures().GetTexture(TextureType::MUG_NAVIGATOR)), "resources/ui/navigator.animation", new Message("Something went wrong - save failed!"));
+        }
+    };
+    auto onNo = [this]() {
+        textbox.Close();
+    };
+    questionInterface = new Question("Do you want to save?", onYes, onNo);
+    textbox.EnqueMessage(
+        sf::Sprite(*Textures().GetTexture(TextureType::MUG_NAVIGATOR)),
+        "resources/ui/navigator.animation",
+        questionInterface);
+    textbox.SetTextSpeed(2.0f);
+    textbox.Open();
+    if (textbox.IsOpen()) {
+        Logger::Log("GotoSave Confirmed");
+    }
 }
 
 void Overworld::SceneBase::GotoMail()
@@ -898,6 +919,11 @@ Overworld::PlayerController& Overworld::SceneBase::GetPlayerController()
     return playerController;
 }
 
+CardFolderCollection Overworld::SceneBase::GetFolderCollection()
+{
+    return GetPlayerSession()->folders;
+}
+
 Overworld::TeleportController& Overworld::SceneBase::GetTeleportController()
 {
     return teleportController;
@@ -919,8 +945,8 @@ PA& Overworld::SceneBase::GetProgramAdvance() {
 
 std::optional<CardFolder*> Overworld::SceneBase::GetSelectedFolder() {
     CardFolder* folder;
-
-    if (folders.GetFolder(0, folder)) {
+    auto fldrs = GetPlayerSession().get()->folders;
+    if (fldrs.GetFolder(0, folder)) {
         return folder;
     }
     else {

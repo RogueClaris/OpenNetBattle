@@ -48,6 +48,25 @@ void ZetaCannonCardAction::Update(double _elapsed)
 
     // TODO: change the "PLAYER_IDLE" check to a `IsActionable()` function per mars' notes...
     bool canShoot = actor.GetFirstComponent<AnimationComponent>()->GetAnimationString() == "PLAYER_IDLE" && !actor.IsMoving();
+    
+    if (!showTimerText) {
+        showTimerText = true;
+        auto* newCannon = new CannonCardAction(actor, CannonCardAction::Type::red, damage);
+        auto actionProps = CardAction::LockoutProperties();
+        actionProps.type = CardAction::LockoutType::animation;
+        actionProps.group = CardAction::LockoutGroup::card;
+        newCannon->SetLockout(actionProps);
+
+        auto event = CardEvent{ std::shared_ptr<CardAction>(newCannon) };
+        actor.AddAction(event, ActionOrder::voluntary);
+        Audio().Play(AudioType::COUNTER_BONUS);
+        defense = new DefenseIndestructable(true);
+        actor.AddDefenseRule(defense);
+
+        if (actor.GetTeam() == Team::blue) {
+            hide = true;
+        }
+    }
 
     if (canShoot && Input().Has(InputEvents::pressed_use_chip)) {
 
@@ -75,7 +94,7 @@ void ZetaCannonCardAction::Update(double _elapsed)
 
   if (showTimerText) {
     timer = std::max(0.0, timer - _elapsed);
-
+    
     // Create an output string stream
     std::ostringstream sstream;
     sstream << std::fixed;
@@ -86,7 +105,7 @@ void ZetaCannonCardAction::Update(double _elapsed)
     std::string timeString = sstream.str();
 
     // Set timer
-    std::string string = "Z-Cannon 1: " + timeString;
+    std::string string = "Z-Cannon: " + timeString;
     timerLabel.SetString(string);
   }
 

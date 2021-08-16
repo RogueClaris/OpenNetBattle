@@ -3,6 +3,7 @@
 #include "bnTile.h"
 #include "bnAura.h"
 #include "bnWindRackCardAction.h"
+#include "bnZapringCardAction.h"
 #include "bnAirHockeyCardAction.h"
 #include "bnHubBatchCardAction.h"
 #include "bnMachGunCardAction.h"
@@ -16,6 +17,7 @@
 #include "bnSwordCardAction.h"
 #include "bnWideSwordCardAction.h"
 #include "bnLongSwordCardAction.h"
+#include "bnDreamSwordCardAction.h"
 #include "bnVulcanCardAction.h"
 #include "bnReflectCardAction.h"
 #include "bnYoYoCardAction.h"
@@ -46,7 +48,7 @@ static CardAction* CardToAction(const Battle::Card& card, Character& character) 
   if (name.substr(0, 4) == "Atk+") {
     next = new InvalidCardAction(character);
   }else if (name.substr(0, 5) == "Recov") {
-    next = new RecoverCardAction(character, card.GetDamage());
+    next = new RecoverCardAction(character, card.GetUnmoddedProps().damage);
   }
   else if (name == "CrckPanel") {
     // Crack the top, middle, and bottom row in front of player
@@ -64,7 +66,7 @@ static CardAction* CardToAction(const Battle::Card& card, Character& character) 
 
     character.Audio().Play(AudioType::PANEL_CRACK);
   }
-  else if (name == "YoYo") {
+  else if (name.substr(0, 4) == "YoYo") {
     next = new YoYoCardAction(character, card.GetDamage());
   }
   else if (name == "Invis") {
@@ -73,7 +75,7 @@ static CardAction* CardToAction(const Battle::Card& card, Character& character) 
   else if (name.substr(0, 7) == "Rflectr") {
     next = new ReflectCardAction(character, card.GetDamage(), ReflectShield::Type::yellow);
   }
-  else if (name == "Zeta Cannon 1") {
+  else if (name.substr(0, 11) == "Zeta Cannon") {
     next = new ZetaCannonCardAction(character, card.GetDamage());
   }
   else if (name == "TwinFang") {
@@ -104,7 +106,7 @@ static CardAction* CardToAction(const Battle::Card& card, Character& character) 
   else if (name == "M-Cannon") {
     next = new CannonCardAction(character, CannonCardAction::Type::red, card.GetDamage());
   }
-  else if (name == "MiniBomb") {
+  else if (name == "Minibomb") {
     next = new BombCardAction(character, card.GetDamage());
   }
   else if (name == "CrakShot") {
@@ -117,7 +119,10 @@ static CardAction* CardToAction(const Battle::Card& card, Character& character) 
     next = new ElecPulseCardAction(character, card.GetDamage());
   }
   else if (name == "LongSwrd") {
-    next = new LongSwordCardAction(character, card.GetDamage());
+      next = new LongSwordCardAction(character, card.GetDamage());
+  }
+  else if (name == "Dream Sword") {
+      next = new DreamSwordCardAction(character, card.GetDamage());
   }
   else if (name == "WideSwrd") {
     next = new WideSwordCardAction(character, card.GetDamage());
@@ -128,9 +133,12 @@ static CardAction* CardToAction(const Battle::Card& card, Character& character) 
     next = action;
   }
   else if (name == "AirShot") {
-    next = new AirShotCardAction(character, card.GetDamage());
+      next = new AirShotCardAction(character, card.GetDamage());
   }
-  else if (name == "Thunder") {
+  else if (name == "Zapring") {
+      next = new ZapringCardAction(character, card.GetDamage());
+  }
+  else if (name.substr(0, 7) == "Thunder") {
     next = new ThunderCardAction(character, card.GetDamage());
   }
   else if (name.substr(0, 4) == "Roll") {
@@ -150,6 +158,15 @@ static CardAction* CardToAction(const Battle::Card& card, Character& character) 
   }
   else if (name == "Barrier") {
     next = new AuraCardAction(character, Aura::Type::BARRIER_10);
+  }
+  else if (name == "Barr100") {
+    next = new AuraCardAction(character, Aura::Type::BARRIER_100);
+  }
+  else if (name == "Barr200") {
+    next = new AuraCardAction(character, Aura::Type::BARRIER_200);
+  }
+  else if (name == "Barr500") {
+    next = new AuraCardAction(character, Aura::Type::BARRIER_500);
   }
   else if (name.substr(0, 7) == "MachGun") {
     next = new MachGunCardAction(character, card.GetDamage());

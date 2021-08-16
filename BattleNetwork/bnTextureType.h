@@ -185,7 +185,9 @@ enum class TextureType : int {
   // CONFIG UI
   AUDIO_ICO,
   END_BTN,
-
+  //Claris Additions
+  SPELL_ZAPRING,
+  MOB_BUNNY_ATLAS,
   // Query size of all texture types
   TEXTURE_TYPE_SIZE
 };

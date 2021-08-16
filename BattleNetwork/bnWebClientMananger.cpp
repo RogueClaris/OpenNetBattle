@@ -102,14 +102,10 @@ void WebClientManager::InitDownloadImageHandler()
 
 void WebClientManager::UploadCardData(const std::string& uuid, 
   std::shared_ptr<sf::Texture> icon, 
-  std::shared_ptr<sf::Texture> image, 
-  std::shared_ptr<WebAccounts::Card> data, 
-  std::shared_ptr<WebAccounts::CardProperties> model)
+  std::shared_ptr<sf::Texture> image)
 {
   cardTextureCache.insert(std::pair(uuid, image));
   iconTextureCache.insert(std::pair(uuid, icon));
-  account.cards[uuid] = data;
-  account.cardProperties[model->id] = model;
 }
 
 void WebClientManager::CacheTextureData(const WebAccounts::AccountState& account)
@@ -893,11 +889,6 @@ std::future<WebAccounts::AccountState> WebClientManager::SendFetchAccountCommand
     }
 
     client->FetchAccount(this->since);
-
-    // Download these cards too:
-    for (auto&& uuid : BuiltInCards::AsList) {
-      Logger::Logf("Could fetch card %s? %s", uuid.data(), (client->FetchCard(uuid)? "yes": "no"));
-    }
 
     account = client->GetLocalAccount();
 
